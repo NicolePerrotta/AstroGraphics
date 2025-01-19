@@ -1,7 +1,6 @@
 // This has been adapted from the Vulkan tutorial
 
 #include "Starter.hpp"
-//commit di prova
 
 // The uniform buffer objects data structures
 // Remember to use the correct alignas(...) value

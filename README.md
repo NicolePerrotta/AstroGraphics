@@ -1,2 +1,0 @@
-# ComputerGraphicsProject
-Computer Graphics Project

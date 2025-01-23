@@ -10,14 +10,17 @@ std::vector<SingleText> outText = {
 };
 
 // The uniform buffer object used in this example
-#define NSHIP 16
-struct BlinnUniformBufferObject {
-	alignas(16) glm::mat4 mvpMat[NSHIP];
-	alignas(16) glm::mat4 mMat[NSHIP];
-	alignas(16) glm::mat4 nMat[NSHIP];
+#define NSHIP 1
+struct BlinnUniformBufferObject { //FIXME: ship
+//	alignas(16) glm::mat4 mvpMat[NSHIP];
+//	alignas(16) glm::mat4 mMat[NSHIP];
+//	alignas(16) glm::mat4 nMat[NSHIP];
+	alignas(16) glm::mat4 mvpMat;
+	alignas(16) glm::mat4 mMat;
+	alignas(16) glm::mat4 nMat;
 };
 
-struct BlinnMatParUniformBufferObject {
+struct BlinnMatParUniformBufferObject { //FIXME: ship
 	alignas(4)  float Power;
 };
 
@@ -52,7 +55,7 @@ struct earthUniformBufferObject{
 
 
 // The vertices data structures
-struct BlinnVertex {
+struct BlinnVertex { //FIXME: ship
 	glm::vec3 pos;
 	glm::vec3 norm;
 	glm::vec2 UV;
@@ -75,6 +78,7 @@ struct earthVertex{
     glm::vec4 tan;
 };
 
+float finalPosition = 0;
 
 // MAIN ! 
 class CG_Proj : public BaseProject {
@@ -83,7 +87,7 @@ class CG_Proj : public BaseProject {
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
 	DescriptorSetLayout DSLGlobal;	// For Global values
 
-	DescriptorSetLayout DSLBlinn;	// For Blinn Objects
+	DescriptorSetLayout DSLBlinn;	// For Blinn Objects  //FIXME: ship
 	DescriptorSetLayout DSLEmission;	// For Emission Objects
 	DescriptorSetLayout DSLskyBox;	// For skyBox
 
@@ -91,14 +95,14 @@ class CG_Proj : public BaseProject {
     DescriptorSetLayout DSL_Normal; //For the earth
 
 	// Vertex formats
-	VertexDescriptor VDBlinn;
+	VertexDescriptor VDBlinn; //FIXME: ship
 	VertexDescriptor VDEmission;
 	VertexDescriptor VDskyBox;
 // **A10** Place here the variable for the VertexDescriptor
     VertexDescriptor VD_Normal;
 
 	// Pipelines [Shader couples]
-	Pipeline PBlinn;
+	Pipeline PBlinn; //FIXME: ship
 	Pipeline PEmission;
 	Pipeline PskyBox;
 // **A10** Place here the variable for the Pipeline
@@ -109,10 +113,11 @@ class CG_Proj : public BaseProject {
 
 	// Models, textures and Descriptor Sets (values assigned to the uniforms)
 	DescriptorSet DSGlobal;
-	
-//	Model Mship;
-//	Texture Tship;
-//	DescriptorSet DSship;
+
+    //FIXME: ship
+	Model Mship;
+	Texture Tship;
+	DescriptorSet DSship;
 	
 	Model Msun;
 	Texture Tsun;
@@ -161,6 +166,7 @@ class CG_Proj : public BaseProject {
 		DSLGlobal.init(this, {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, sizeof(GlobalUniformBufferObject), 1}
 				});
+        //FIXME: per ship
 		DSLBlinn.init(this, {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(BlinnUniformBufferObject), 1},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
@@ -187,16 +193,17 @@ class CG_Proj : public BaseProject {
         });
 
 		// Vertex descriptors
-//		VDBlinn.init(this, {
-//				  {0, sizeof(BlinnVertex), VK_VERTEX_INPUT_RATE_VERTEX}
-//				}, {
-//				  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BlinnVertex, pos),
-//				         sizeof(glm::vec3), POSITION},
-//				  {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BlinnVertex, norm),
-//				         sizeof(glm::vec3), NORMAL},
-//				  {0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(BlinnVertex, UV),
-//				         sizeof(glm::vec2), UV}
-//				});
+        //FIXME: ship
+		VDBlinn.init(this, {
+				  {0, sizeof(BlinnVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+				}, {
+				  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BlinnVertex, pos),
+				         sizeof(glm::vec3), POSITION},
+				  {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(BlinnVertex, norm),
+				         sizeof(glm::vec3), NORMAL},
+				  {0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(BlinnVertex, UV),
+				         sizeof(glm::vec2), UV}
+				});
 		VDEmission.init(this, {
 				  {0, sizeof(EmissionVertex), VK_VERTEX_INPUT_RATE_VERTEX}
 				}, {
@@ -222,7 +229,8 @@ class CG_Proj : public BaseProject {
                     });
 
 		// Pipelines [Shader couples]
-		PBlinn.init(this, &VDBlinn,  "shaders/BlinnVert.spv",    "shaders/BlinnFrag.spv", {&DSLGlobal, &DSLBlinn});
+        //FIXME: ship
+        PBlinn.init(this, &VDBlinn,  "shaders/BlinnVert.spv",    "shaders/BlinnFrag.spv", {&DSLGlobal, &DSLBlinn});
 		PEmission.init(this, &VDEmission,  "shaders/EmissionVert.spv",    "shaders/EmissionFrag.spv", {&DSLEmission});
 		PskyBox.init(this, &VDskyBox, "shaders/SkyBoxVert.spv", "shaders/SkyBoxFrag.spv", {&DSLskyBox});
 		PskyBox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
@@ -233,7 +241,7 @@ class CG_Proj : public BaseProject {
         P_Normal.init(this, &VD_Normal,  "shaders/NormalMapVert.spv",    "shaders/NormalMapFrag.spv", {&DSLGlobal, &DSL_Normal});
 
 		// Create models
-//		Mship.init(this, &VDBlinn, "models/X-WING-baker.obj", OBJ);
+		Mship.init(this, &VDBlinn, "models/X-WING-baker.obj", OBJ);
 		Msun.init(this, &VDEmission, "models/Sphere.obj", OBJ);
 		MskyBox.init(this, &VDskyBox, "models/SkyBoxCube.obj", OBJ);
 // **A10** Place here the loading of the model. It should be contained in file "models/Sphere.gltf", it should use the
@@ -241,7 +249,7 @@ class CG_Proj : public BaseProject {
         M_earth.init(this, &VD_Normal, "models/Sphere.gltf", GLTF);
 
 		// Create the textures
-//		Tship.init(this, "textures/XwingColors.png");
+		Tship.init(this, "textures/XwingColors.png");
 		Tsun.init(this, "textures/2k_sun.jpg");
 		TskyBox.init(this, "textures/starmap_g4k.jpg");
 		Tstars.init(this, "textures/constellation_figures.png");
@@ -282,14 +290,15 @@ std::cout << "Initializing text\n";
 	// Here you create your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsInit() {
 		// This creates a new pipeline (with the current surface), using its shaders
-		PBlinn.create();
+        //FIXME: ship
+        PBlinn.create();
 		PEmission.create();
 		PskyBox.create();
 // **A10** Add the pipeline creation
         P_Normal.create();
 
 		// Here you define the data set
-//		DSship.init(this, &DSLBlinn, {&Tship});
+		DSship.init(this, &DSLBlinn, {&Tship});
 		DSsun.init(this, &DSLEmission, {&Tsun});
 		DSskyBox.init(this, &DSLskyBox, {&TskyBox, &Tstars});
 // **A10** Add the descriptor set creation
@@ -305,13 +314,14 @@ std::cout << "Initializing text\n";
 	// All the object classes defined in Starter.hpp have a method .cleanup() for this purpose
 	void pipelinesAndDescriptorSetsCleanup() {
 		// Cleanup pipelines
-		PBlinn.cleanup();
+        //FIXME: rimuovere ship
+        PBlinn.cleanup();
 		PEmission.cleanup();
 		PskyBox.cleanup();
 // **A10** Add the pipeline cleanup
         P_Normal.cleanup();
 
-//		DSship.cleanup();
+		DSship.cleanup();
 		DSsun.cleanup();
 		DSskyBox.cleanup();
 		DSGlobal.cleanup();
@@ -325,9 +335,10 @@ std::cout << "Initializing text\n";
 	// All the object classes defined in Starter.hpp have a method .cleanup() for this purpose
 	// You also have to destroy the pipelines: since they need to be rebuilt, they have two different
 	// methods: .cleanup() recreates them, while .destroy() delete them completely
-	void localCleanup() {	
-//		Tship.cleanup();
-//		Mship.cleanup();
+	void localCleanup() {
+        //FIXME: rimuovere ship
+		Tship.cleanup();
+		Mship.cleanup();
 
 		Tsun.cleanup();
 		Msun.cleanup();
@@ -344,7 +355,8 @@ std::cout << "Initializing text\n";
         M_earth.cleanup();
 		
 		// Cleanup descriptor set layouts
-		DSLBlinn.cleanup();
+        //FIXME: rimuovere ship
+        DSLBlinn.cleanup();
 		DSLEmission.cleanup();
 		DSLGlobal.cleanup();
 		DSLskyBox.cleanup();
@@ -352,7 +364,8 @@ std::cout << "Initializing text\n";
         DSL_Normal.cleanup();
 		
 		// Destroies the pipelines
-		PBlinn.destroy();
+        //FIXME: rimuovere ship
+        PBlinn.destroy();
 		PEmission.destroy();
 		PskyBox.destroy();
 // **A10** Add the cleanup for the pipeline
@@ -367,18 +380,21 @@ std::cout << "Initializing text\n";
 	
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
 		// binds the pipeline
-		PBlinn.bind(commandBuffer);
+        //FIXME: ship
+        PBlinn.bind(commandBuffer);
 		
 		// The models (both index and vertex buffers)
-//		Mship.bind(commandBuffer);
+        //FIXME: ship
+        Mship.bind(commandBuffer);
 		
 		// The descriptor sets, for each descriptor set specified in the pipeline
 		DSGlobal.bind(commandBuffer, PBlinn, 0, currentImage);	// The Global Descriptor Set (Set 0)
-//		DSship.bind(commandBuffer, PBlinn, 1, currentImage);	// The Material and Position Descriptor Set (Set 1)
+        //FIXME: ship
+        DSship.bind(commandBuffer, PBlinn, 1, currentImage);	// The Material and Position Descriptor Set (Set 1)
 					
 		// The actual draw call.
-//		vkCmdDrawIndexed(commandBuffer,
-//				static_cast<uint32_t>(Mship.indices.size()), NSHIP, 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(Mship.indices.size()), NSHIP, 0, 0, 0);
 
 
 
@@ -437,6 +453,32 @@ std::cout << "Initializing text\n";
 			tTime = tTime + deltaT;
 			tTime = (tTime > TturnTime) ? (tTime - TturnTime) : tTime;
 		}
+
+        //Launch countdown-------------------------
+        static float LCTime = 0.0;
+
+        static float countdown = false;
+        static float liftOff = false;
+
+
+        if(countdown) {
+
+            int oldTime = static_cast<int>(LCTime);
+            LCTime = LCTime + deltaT;
+            int newTime = static_cast<int>(LCTime);
+
+            if (newTime == oldTime + 1){
+                newTime = 11 - newTime;
+                std::cout << "countdown    = " << newTime    << ";\n";
+            }
+
+            if (newTime == 11){
+                std::cout << "Inizio il lancio \n";
+                countdown = false;
+                liftOff = true;
+                std::cout << "La navicella si muove \n";
+            }
+        }
 		
 		const float ROT_SPEED = glm::radians(120.0f);
 		const float MOVE_SPEED = 2.0f;
@@ -460,18 +502,10 @@ std::cout << "Initializing text\n";
 			if(!debounce) {
 				debounce = true;
 				curDebounce = GLFW_KEY_SPACE;
-				if(currScene != 1) {
-					currScene = (currScene+1) % outText.size();
 
-				}
-				if(currScene == 1) {
-					if(subpass >= 4) {
-						currScene = 0;
-					}
-				}
-				std::cout << "Scene : " << currScene << "\n";
-				
-				RebuildPipeline();
+                std::cout << "Premuto spazio, inizio il countdown\n";
+                countdown = true;
+
 			}
 		} else {
 			if((curDebounce == GLFW_KEY_SPACE) && debounce) {
@@ -604,25 +638,17 @@ ShowTexture    = 0;
 
 		// updates global uniforms
 		// Global
-		GlobalUniformBufferObject gubo{};
-//		gubo.lightDir = glm::vec3(
-//                cos(glm::radians(135.0f)) * cos(cTime * angTurnTimeFact),
-//                sin(glm::radians(135.0f)),
-//                cos(glm::radians(135.0f)) * sin(cTime * angTurnTimeFact)
-//                );
-        gubo.lightDir = glm::vec3(
-                cos(glm::radians(135.0f)),
-                sin(glm::radians(135.0f) * sin(cTime * angTurnTimeFact)),
-                cos(glm::radians(135.0f))
-        );
-		gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		gubo.eyePos = glm::vec3(glm::inverse(ViewMatrix) * glm::vec4(0, 0, 0, 1));
-		DSGlobal.map(currentImage, &gubo, 0);
+        GlobalUniformBufferObject gubo{};
+        gubo.lightDir = glm::vec3(cos(glm::radians(135.0f)) * cos(cTime * angTurnTimeFact), sin(glm::radians(135.0f)), cos(glm::radians(135.0f)) * sin(cTime * angTurnTimeFact));
+        gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        gubo.eyePos = glm::vec3(glm::inverse(ViewMatrix) * glm::vec4(0, 0, 0, 1));
+        DSGlobal.map(currentImage, &gubo, 0);
 
 		// objects
-//		BlinnUniformBufferObject blinnUbo{};
-//		BlinnMatParUniformBufferObject blinnMatParUbo{};
-//
+        //FIXME: ship
+		BlinnUniformBufferObject blinnUbo{};
+		BlinnMatParUniformBufferObject blinnMatParUbo{};
+
 //		for(int j = 0; j < 4; j++) {
 //			for(int k = 0; k < 4; k++) {
 //				int i = j*4+k;
@@ -631,10 +657,52 @@ ShowTexture    = 0;
 //				blinnUbo.nMat[i] = glm::inverse(glm::transpose(blinnUbo.mMat[i]));
 //			}
 //		}
-//		DSship.map(currentImage, &blinnUbo, 0);
-//
-//		blinnMatParUbo.Power = 200.0;
-//		DSship.map(currentImage, &blinnMatParUbo, 2);
+
+
+        blinnUbo.mMat = glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,1))
+        * glm::translate(glm::mat4(1), glm::vec3(4.05 + finalPosition, 0,0))
+        * glm::scale(glm::mat4(1), glm::vec3(0.025))
+        * baseTr;
+
+
+        //Flight timer----------------
+        static float flightTimer = 0;
+
+        if (liftOff){
+
+            //TODO: print flightTimer su schermo
+
+            int oldTime = static_cast<int>(flightTimer);
+            float flightTimerSpeedFactor = flightTimer + (deltaT) * 1/2;
+            flightTimer = flightTimer + deltaT;
+            int newTime = static_cast<int>(flightTimer);
+
+            if (newTime == oldTime + 1){
+                std::cout << "flightTimer    = " << newTime    << ";\n";
+            }
+
+            //TODO: decidere durata volo
+            int flightDuration = 5;
+            if (newTime == flightDuration){
+                std::cout << "Termino il volo \n";
+                liftOff = false;
+                finalPosition = flightTimerSpeedFactor;
+            }
+
+            blinnUbo.mMat = glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,1))
+                            * glm::translate(glm::mat4(1), glm::vec3(4.05 + flightTimerSpeedFactor, 0,0))
+                            * glm::scale(glm::mat4(1), glm::vec3(0.025))
+                            * baseTr;
+
+        }
+
+        blinnUbo.mvpMat = ViewPrj * blinnUbo.mMat;
+        blinnUbo.nMat = glm::inverse(glm::transpose(blinnUbo.mMat));
+
+		DSship.map(currentImage, &blinnUbo, 0);
+
+		blinnMatParUbo.Power = 200.0;
+		DSship.map(currentImage, &blinnMatParUbo, 2);
 
 
 		EmissionUniformBufferObject emissionUbo{};
@@ -649,7 +717,7 @@ ShowTexture    = 0;
         NormalUniformBufferObject nUbo{};
 
         // World and normal matrix should be the identity. The World-View-Projection should be variable ViewPrj
-        nUbo.mMat = glm::mat4(1.0f);
+        nUbo.mMat = glm::mat4(1.0f) * glm::scale(glm::mat4(1), glm::vec3(4));
         nUbo.nMat = glm::mat4(1.0f);
         nUbo.mvpMat = ViewPrj * nUbo.mMat;
 

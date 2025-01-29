@@ -421,38 +421,54 @@ std::cout << "Initializing text\n";
                          static_cast<uint32_t>(M_earth.indices.size()), 1, 0, 0, 0);
 
 
-		txt.populateCommandBuffer(commandBuffer, currentImage, currScene);
-	}
+        txt.populateCommandBuffer(commandBuffer, currentImage, currScene);
+    }
 
-	// Here is where you update the uniforms.
-	// Very likely this will be where you will be writing the logic of your application.
-	void updateUniformBuffer(uint32_t currentImage) {
-		static bool debounce = false;
-		static int curDebounce = 0;
+    // Here is where you update the uniforms.
+    // Very likely this will be where you will be writing the logic of your application.
+    void updateUniformBuffer(uint32_t currentImage) {
+        static bool debounce = false;
+        static int curDebounce = 0;
 
-		float deltaT;
-		glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
-		bool fire = false;
-		getSixAxis(deltaT, m, r, fire);
-		
-		static float autoTime = true;
-		static float cTime = 0.0;
-		const float turnTime = 72.0f;
-		const float angTurnTimeFact = 2.0f * M_PI / turnTime;
-		
-		if(autoTime) {
-			cTime = cTime + deltaT;
-			cTime = (cTime > turnTime) ? (cTime - turnTime) : cTime;
-		}
+        float deltaT;
+        glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
+        bool fire = false;
+        getSixAxis(deltaT, m, r, fire);
 
-		static float tTime = 0.0;
-		const float TturnTime = 60.0f;
-		const float TangTurnTimeFact = 1.0f / TturnTime;
-		
-		if(autoTime) {
-			tTime = tTime + deltaT;
-			tTime = (tTime > TturnTime) ? (tTime - TturnTime) : tTime;
-		}
+        static float autoTime = true;
+        static float cTime = 0.0;
+        const float turnTime = 72.0f;
+        const float angTurnTimeFact = 2.0f * M_PI / turnTime;
+
+        if(autoTime) {
+            cTime = cTime + deltaT;
+            cTime = (cTime > turnTime) ? (cTime - turnTime) : cTime;
+        }
+
+        static float tTime = 0.0;
+        const float TturnTime = 60.0f;
+        const float TangTurnTimeFact = 1.0f / TturnTime;
+
+        if(autoTime) {
+            tTime = tTime + deltaT;
+            tTime = (tTime > TturnTime) ? (tTime - TturnTime) : tTime;
+        }
+
+        //Ship position info-----------------------------------------------
+        static float shipPos_x  = 0;
+        static float shipPos_y  = 4.05;
+        static float shipPos_z  = 0;
+        static float shipRoll   = glm::radians(90.0f);
+        static float shipPitch  = glm::radians(0.0f);
+        static float shipYaw    = glm::radians(0.0f);
+
+        glm::vec3 shipPosition = glm::vec3(shipPos_x, shipPos_y, shipPos_z);
+        glm::vec3 shipForwardDirection  = glm::vec3(1.0f, 0.0f, 0.0f);
+        glm::vec3 shipRightDirection    = glm::vec3(0.0f, 0.0f, 1.0f);
+        glm::vec3 shipUpDirection       = glm::vec3(0.0f, 1.0f, 0.0f);
+
+        glm::vec3 cameraPosition = shipPosition + glm::vec3(0, 0.1, 0.15);
+        glm::vec3 cameraUpVector = glm::vec3(0, 1, 0);
 
         //Launch countdown-------------------------
         static float LCTime = 0.0;
@@ -479,175 +495,188 @@ std::cout << "Initializing text\n";
                 std::cout << "La navicella si muove \n";
             }
         }
-		
-		const float ROT_SPEED = glm::radians(120.0f);
-		const float MOVE_SPEED = 2.0f;
-		
-		static float ShowCloud = 1.0f;
-		static float ShowTexture = 1.0f;
-		
-		// The Fly model update proc.
-		ViewMatrix = glm::rotate(glm::mat4(1), ROT_SPEED * r.x * deltaT,
-								 glm::vec3(1, 0, 0)) * ViewMatrix;
-		ViewMatrix = glm::rotate(glm::mat4(1), ROT_SPEED * r.y * deltaT,
-								 glm::vec3(0, 1, 0)) * ViewMatrix;
-		ViewMatrix = glm::rotate(glm::mat4(1), -ROT_SPEED * r.z * deltaT,
-								 glm::vec3(0, 0, 1)) * ViewMatrix;
-		ViewMatrix = glm::translate(glm::mat4(1), -glm::vec3(
-								   MOVE_SPEED * m.x * deltaT, MOVE_SPEED * m.y * deltaT, MOVE_SPEED * m.z * deltaT))
-													   * ViewMatrix;
-		static float subpassTimer = 0.0;
 
-		if(glfwGetKey(window, GLFW_KEY_SPACE)) {
-			if(!debounce) {
-				debounce = true;
-				curDebounce = GLFW_KEY_SPACE;
+        const float ROT_SPEED = glm::radians(120.0f);
+        const float MOVE_SPEED = 2.0f;
+
+        static float ShowCloud = 1.0f;
+        static float ShowTexture = 1.0f;
+
+        // The Fly model update proc.
+        ViewMatrix = glm::rotate(glm::mat4(1), ROT_SPEED * r.x * deltaT,glm::vec3(1, 0, 0)) * ViewMatrix;
+        ViewMatrix = glm::rotate(glm::mat4(1), ROT_SPEED * r.y * deltaT,glm::vec3(0, 1, 0)) * ViewMatrix;
+        ViewMatrix = glm::rotate(glm::mat4(1), -ROT_SPEED * r.z * deltaT,glm::vec3(0, 0, 1)) * ViewMatrix;
+        ViewMatrix = glm::translate(glm::mat4(1),-glm::vec3(  MOVE_SPEED * m.x * deltaT,
+                                                              MOVE_SPEED * m.y * deltaT,
+                                                              MOVE_SPEED * m.z * deltaT)
+        )* ViewMatrix;
+
+        glm::mat4 Mv_lookAt = glm::rotate(glm::mat4(1.0f), /*shipRoll*/0.0f, glm::vec3(0, 0, 1)) *
+                              glm::lookAt(cameraPosition, shipPosition, /*glm::vec3(0,1,0)*/cameraUpVector);
+
+        static float subpassTimer = 0.0;
+
+        if(glfwGetKey(window, GLFW_KEY_SPACE)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_SPACE;
 
                 std::cout << "Premuto spazio, inizio il countdown\n";
                 countdown = true;
 
-			}
-		} else {
-			if((curDebounce == GLFW_KEY_SPACE) && debounce) {
-				debounce = false;
-				curDebounce = 0;
-			}
-		}
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_SPACE) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
 
-		// Standard procedure to quit when the ESC key is pressed
-		if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
-			glfwSetWindowShouldClose(window, GL_TRUE);
-		}
-
-
-		if(glfwGetKey(window, GLFW_KEY_V)) {
-			if(!debounce) {
-				debounce = true;
-				curDebounce = GLFW_KEY_V;
-
-				printMat4("ViewMatrix  ", ViewMatrix);				
-				std::cout << "cTime    = " << cTime    << ";\n";
-				std::cout << "tTime    = " << tTime    << ";\n";
-				std::cout << "ShowCloud    = " << ShowCloud    << ";\n";
-				std::cout << "ShowTexture    = " << ShowTexture    << ";\n";
-			}
-		} else {
-			if((curDebounce == GLFW_KEY_V) && debounce) {
-				debounce = false;
-				curDebounce = 0;
-			}
-		}
-
-		if(glfwGetKey(window, GLFW_KEY_C)) {
-			if(!debounce) {
-				debounce = true;
-				curDebounce = GLFW_KEY_C;
-				
-				ShowCloud = 1.0f - ShowCloud;
-			}
-		} else {
-			if((curDebounce == GLFW_KEY_C) && debounce) {
-				debounce = false;
-				curDebounce = 0;
-			}
-		}
-
-		if(glfwGetKey(window, GLFW_KEY_T)) {
-			if(!debounce) {
-				debounce = true;
-				curDebounce = GLFW_KEY_T;
-				
-				ShowTexture = 1.0f - ShowTexture;
-			}
-		} else {
-			if((curDebounce == GLFW_KEY_T) && debounce) {
-				debounce = false;
-				curDebounce = 0;
-			}
-		}
-
-	
-		if(currScene == 1) {
-			switch(subpass) {
-			  case 0:
-ViewMatrix   = glm::mat4(-0.0656882, -0.162777, 0.984474, 0, 0.0535786, 0.984606, 0.166374, 0, -0.996401, 0.0636756, -0.0559558, 0, 0.0649244, -0.531504, -3.26128, 1);
-cTime    = 22.3604;
-tTime    = 22.3604;
-ShowCloud    = 1;
-ShowTexture    = 1;
-autoTime = false;
-				break;
-			  case 1:
-ViewMatrix   = glm::mat4(-0.312507, -0.442291, 0.840666, 0, 0.107287, 0.862893, 0.493868, 0, -0.943837, 0.24453, -0.222207, 0, -0.0157694, -0.186147, -1.54649, 1);
-cTime    = 38.9919;
-tTime    = 38.9919;
-ShowCloud    = 0;
-ShowTexture    = 1;
-				break;
-			  case 2:
-ViewMatrix   = glm::mat4(-0.992288, 0.00260993, -0.12393, 0, -0.0396232, 0.940648, 0.337063, 0, 0.117454, 0.339374, -0.93329, 0, 0.0335061, -0.0115242, -2.99662, 1);
-cTime    = 71.0587;
-tTime    = 11.0587;
-ShowCloud    = 1;
-ShowTexture    = 1;
-				break;
-			  case 3:
-ViewMatrix   = glm::mat4(0.0942192, -0.242781, 0.965495, 0, 0.560756, 0.814274, 0.150033, 0, -0.822603, 0.527272, 0.212861, 0, -0.567191, -0.254532, -1.79143, 1);
-cTime    = 55.9355;
-tTime    = 7.93549;
-ShowCloud    = 1;
-ShowTexture    = 0;
-				break;
-			}
-		}
-		
-		if(currScene == 1) {
-			subpassTimer += deltaT;
-			if(subpassTimer > 4.0f) {
-				subpassTimer = 0.0f;
-				subpass++;
-				std::cout << "Scene : " << currScene << " subpass: " << subpass << "\n";
-				char buf[20];
-				sprintf(buf, "A10_%d.png", subpass);
-				saveScreenshot(buf, currentImage);
-				if(subpass == 4) {
-					ViewMatrix = glm::translate(glm::mat4(1), -CamPos);
-					cTime    = 0;
-					tTime    = 0;
-					ShowCloud    = 1;
-					ShowTexture    = 1;
-					autoTime = true;
-					
-					
-					currScene = 0;
-					std::cout << "Scene : " << currScene << "\n";
-					RebuildPipeline();
-				}
-			}
-		}
+        // Standard procedure to quit when the ESC key is pressed
+        if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
+            glfwSetWindowShouldClose(window, GL_TRUE);
+        }
 
 
-		// Here is where you actually update your uniforms
-		glm::mat4 M = glm::perspective(glm::radians(45.0f), Ar, 0.1f, 160.0f);
-		M[1][1] *= -1;
+        if(glfwGetKey(window, GLFW_KEY_V)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_V;
 
-		glm::mat4 Mv = ViewMatrix;
+                printMat4("ViewMatrix  ", ViewMatrix);
+                std::cout << "cTime    = " << cTime    << ";\n";
+                std::cout << "tTime    = " << tTime    << ";\n";
+                std::cout << "ShowCloud    = " << ShowCloud    << ";\n";
+                std::cout << "ShowTexture    = " << ShowTexture    << ";\n";
 
-		glm::mat4 ViewPrj =  M * Mv;
-		glm::mat4 baseTr = glm::mat4(1.0f);								
+                std::cout << "m.x    = " << m.x    << ";\n";
+                std::cout << "m.y    = " << m.y    << ";\n";
+                std::cout << "m.z    = " << m.z    << ";\n";
+                std::cout << "r.x    = " << r.x    << ";\n";
+                std::cout << "r.y    = " << r.y    << ";\n";
+                std::cout << "r.z    = " << r.z    << ";\n\n";
 
-		// updates global uniforms
-		// Global
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_V) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+
+        if(glfwGetKey(window, GLFW_KEY_C)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_C;
+
+                ShowCloud = 1.0f - ShowCloud;
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_C) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+
+        if(glfwGetKey(window, GLFW_KEY_T)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_T;
+
+                ShowTexture = 1.0f - ShowTexture;
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_T) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+
+
+        if(currScene == 1) {
+            switch(subpass) {
+                case 0:
+                    ViewMatrix   = glm::mat4(-0.0656882, -0.162777, 0.984474, 0, 0.0535786, 0.984606, 0.166374, 0, -0.996401, 0.0636756, -0.0559558, 0, 0.0649244, -0.531504, -3.26128, 1);
+                    cTime    = 22.3604;
+                    tTime    = 22.3604;
+                    ShowCloud    = 1;
+                    ShowTexture    = 1;
+                    autoTime = false;
+                    break;
+                case 1:
+                    ViewMatrix   = glm::mat4(-0.312507, -0.442291, 0.840666, 0, 0.107287, 0.862893, 0.493868, 0, -0.943837, 0.24453, -0.222207, 0, -0.0157694, -0.186147, -1.54649, 1);
+                    cTime    = 38.9919;
+                    tTime    = 38.9919;
+                    ShowCloud    = 0;
+                    ShowTexture    = 1;
+                    break;
+                case 2:
+                    ViewMatrix   = glm::mat4(-0.992288, 0.00260993, -0.12393, 0, -0.0396232, 0.940648, 0.337063, 0, 0.117454, 0.339374, -0.93329, 0, 0.0335061, -0.0115242, -2.99662, 1);
+                    cTime    = 71.0587;
+                    tTime    = 11.0587;
+                    ShowCloud    = 1;
+                    ShowTexture    = 1;
+                    break;
+                case 3:
+                    ViewMatrix   = glm::mat4(0.0942192, -0.242781, 0.965495, 0, 0.560756, 0.814274, 0.150033, 0, -0.822603, 0.527272, 0.212861, 0, -0.567191, -0.254532, -1.79143, 1);
+                    cTime    = 55.9355;
+                    tTime    = 7.93549;
+                    ShowCloud    = 1;
+                    ShowTexture    = 0;
+                    break;
+            }
+        }
+
+        if(currScene == 1) {
+            subpassTimer += deltaT;
+            if(subpassTimer > 4.0f) {
+                subpassTimer = 0.0f;
+                subpass++;
+                std::cout << "Scene : " << currScene << " subpass: " << subpass << "\n";
+                char buf[20];
+                sprintf(buf, "A10_%d.png", subpass);
+                saveScreenshot(buf, currentImage);
+                if(subpass == 4) {
+                    ViewMatrix = glm::translate(glm::mat4(1), -CamPos);
+                    cTime    = 0;
+                    tTime    = 0;
+                    ShowCloud    = 1;
+                    ShowTexture    = 1;
+                    autoTime = true;
+
+
+                    currScene = 0;
+                    std::cout << "Scene : " << currScene << "\n";
+                    RebuildPipeline();
+                }
+            }
+        }
+
+
+        // Here is where you actually update your uniforms
+        glm::mat4 Mp = glm::perspective(glm::radians(45.0f), Ar, 0.1f, 160.0f);
+        Mp[1][1] *= -1;
+
+//		glm::mat4 Mv = ViewMatrix;
+        glm::mat4 Mv = Mv_lookAt;
+
+        glm::mat4 ViewPrj = Mp * Mv;
+        glm::mat4 baseTr = glm::mat4(1.0f);
+
+        // updates global uniforms
+        // Global
         GlobalUniformBufferObject gubo{};
         gubo.lightDir = glm::vec3(cos(glm::radians(135.0f)) * cos(cTime * angTurnTimeFact), sin(glm::radians(135.0f)), cos(glm::radians(135.0f)) * sin(cTime * angTurnTimeFact));
         gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-        gubo.eyePos = glm::vec3(glm::inverse(ViewMatrix) * glm::vec4(0, 0, 0, 1));
+//        gubo.eyePos = glm::vec3(glm::inverse(ViewMatrix) * glm::vec4(0, 0, 0, 1));
+//        gubo.eyePos = glm::vec3(glm::inverse(Mv_lookAt) * glm::vec4(0, 0, 0, 1));
+        gubo.eyePos = cameraPosition;
         DSGlobal.map(currentImage, &gubo, 0);
 
-		// objects
+        // objects
         //FIXME: ship
-		BlinnUniformBufferObject blinnUbo{};
-		BlinnMatParUniformBufferObject blinnMatParUbo{};
+        BlinnUniformBufferObject blinnUbo{};
+        BlinnMatParUniformBufferObject blinnMatParUbo{};
 
 //		for(int j = 0; j < 4; j++) {
 //			for(int k = 0; k < 4; k++) {
@@ -657,23 +686,18 @@ ShowTexture    = 0;
 //				blinnUbo.nMat[i] = glm::inverse(glm::transpose(blinnUbo.mMat[i]));
 //			}
 //		}
-
-
-        blinnUbo.mMat = glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,1))
-        * glm::translate(glm::mat4(1), glm::vec3(4.05 + finalPosition, 0,0))
-        * glm::scale(glm::mat4(1), glm::vec3(0.025))
-        * baseTr;
-
-
         //Flight timer----------------
         static float flightTimer = 0;
+        float flightTimerSpeedFactor = 0;
+
 
         if (liftOff){
 
             //TODO: print flightTimer su schermo
 
             int oldTime = static_cast<int>(flightTimer);
-            float flightTimerSpeedFactor = flightTimer + (deltaT) * 1/2;
+//            float flightTimerSpeedFactor = flightTimer + (deltaT) * 1/2;
+            flightTimerSpeedFactor = flightTimer + (deltaT) * 1/2;
             flightTimer = flightTimer + deltaT;
             int newTime = static_cast<int>(flightTimer);
 
@@ -689,30 +713,249 @@ ShowTexture    = 0;
                 finalPosition = flightTimerSpeedFactor;
             }
 
-            blinnUbo.mMat = glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,1))
-                            * glm::translate(glm::mat4(1), glm::vec3(4.05 + flightTimerSpeedFactor, 0,0))
-                            * glm::scale(glm::mat4(1), glm::vec3(0.025))
-                            * baseTr;
+//            blinnUbo.mMat = glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,1))
+//                            * glm::translate(glm::mat4(1), glm::vec3(4.05 + flightTimerSpeedFactor, 0,0))
+//                            * glm::scale(glm::mat4(1), glm::vec3(0.025))
+//                            * baseTr;
 
         }
+
+//        blinnUbo.mMat =
+//                glm::translate(glm::mat4(1), glm::vec3(4.05 + finalPosition, 0,0))
+//                * glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,1))
+//                * glm::scale(glm::mat4(1), glm::vec3(0.025))
+//                * baseTr;
+
+//        blinnUbo.mMat = glm::rotate(glm::mat4(1), ROT_SPEED * r.x * deltaT, glm::vec3(1, 0, 0)) * blinnUbo.mMat;
+//        blinnUbo.mMat = glm::rotate(glm::mat4(1), ROT_SPEED * r.y * deltaT, glm::vec3(0, 1, 0)) * blinnUbo.mMat;
+//        blinnUbo.mMat = glm::rotate(glm::mat4(1), -ROT_SPEED * r.z * deltaT, glm::vec3(0, 0, 1)) * blinnUbo.mMat;
+//        blinnUbo.mMat = glm::translate(glm::mat4(1), glm::vec3(MOVE_SPEED * m.x * deltaT, MOVE_SPEED * m.y * deltaT, MOVE_SPEED * m.z * deltaT)) * blinnUbo.mMat;
+
+//        blinnUbo.mMat =
+//                        glm::translate(glm::mat4(1), glm::vec3(0, 4.05 + finalPosition,0))
+//                        * glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,1))
+//                        * glm::scale(glm::mat4(1), glm::vec3(0.025))
+//                        * baseTr;
+
+//        shipPos_x  += MOVE_SPEED * m.x * deltaT + MOVE_SPEED * m.z * deltaT * cos(shipForwardDirection[0]);
+//        shipPos_y  += MOVE_SPEED * m.y * deltaT + MOVE_SPEED * m.z * deltaT * std::sin(shipForwardDirection[1]);
+//        shipPos_z  += MOVE_SPEED * m.z * deltaT /*+ MOVE_SPEED * m.z * deltaT * std::cos(shipForwardDirection.z)*/;
+        shipRoll   += ROT_SPEED * r.x * deltaT;
+        shipPitch  += -ROT_SPEED * r.z * deltaT;
+        shipYaw    += -ROT_SPEED * r.y * deltaT;
+
+        //Controllo limiti rotazioni
+//        const float PITCH_MIN   = -glm::radians(-90.0f);
+//        const float PITCH_MAX   =  glm::radians(90.0f);
+//        const float YAW_MIN     = -glm::radians(-180.0f);
+//        const float YAW_MAX     =  glm::radians(180.0f);
+//        const float ROLL_MIN    = -glm::radians(-180.0f);
+//        const float ROLL_MAX    =  glm::radians(180.0f);
+//
+//        if (shipPitch < PITCH_MIN) shipPitch = PITCH_MIN;
+//        if (shipPitch > PITCH_MAX) shipPitch = PITCH_MAX;
+//
+//        if (shipYaw < YAW_MIN) shipYaw = YAW_MIN;
+//        if (shipYaw > YAW_MAX) shipYaw = YAW_MAX;
+//
+//        if (shipRoll < ROLL_MIN) shipRoll = ROLL_MIN;
+//        if (shipRoll > ROLL_MAX) shipRoll = ROLL_MAX;
+
+//        blinnUbo.mMat =
+//                glm::translate(glm::mat4(1), glm::vec3(shipPos_x, shipPos_y, shipPos_z))
+//                * glm::rotate(glm::mat4(1), shipYaw, glm::vec3(0, 1, 0))
+//                * glm::rotate(glm::mat4(1), shipPitch, glm::vec3(1, 0, 0))
+//                * glm::rotate(glm::mat4(1), shipRoll, glm::vec3(0, 0, 1))
+//                * glm::scale(glm::mat4(1), glm::vec3(0.025))
+//                * baseTr;
+
+
+
+//        blinnUbo.mMat =
+//                glm::translate(glm::mat4(1), glm::vec3(shipPos_x, shipPos_y, shipPos_z))
+//                * glm::rotate(glm::mat4(1), shipYaw,     shipUpDirection )
+//                * glm::rotate(glm::mat4(1), shipPitch,   shipForwardDirection )
+//                * glm::rotate(glm::mat4(1), shipRoll,    shipRightDirection )
+//                * glm::scale(glm::mat4(1), glm::vec3(0.025))
+//                * baseTr;
+//
+//        //TODO: calcolare qui gli assi normali e poi li vado a mettere sotto per la direzione di rotazione
+//        //Update the direction of the ship and of the camera
+//        shipForwardDirection =  glm::normalize(glm::vec3(blinnUbo.mMat * glm::vec4(1,0,0,0)));
+//        shipRightDirection =    glm::normalize(glm::vec3(blinnUbo.mMat * glm::vec4(0,0,1,0)));
+//        shipUpDirection =       glm::normalize(glm::vec3(blinnUbo.mMat * glm::vec4(0,1,0,0)));
+//        cameraUpVector =        glm::normalize(glm::cross(shipRightDirection, shipForwardDirection));
+
+        // Step 1: Calcola la matrice di rotazione aggiornata
+        glm::mat4 rotationMatrix =
+                glm::rotate(glm::mat4(1), shipYaw, glm::vec3(0, 1, 0)) // Rotazione Yaw
+                * glm::rotate(glm::mat4(1), shipPitch, glm::vec3(1, 0, 0)) // Rotazione Pitch
+                * glm::rotate(glm::mat4(1), shipRoll, glm::vec3(0, 0, 1)); // Rotazione Roll
+
+        // Step 2: Aggiorna le direzioni della ship
+        shipForwardDirection = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(1, 0, 0, 0)));
+        shipRightDirection   = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(0, 0, 1, 0)));
+        shipUpDirection      = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(0, 1, 0, 0)));
+
+        // Step 3: Aggiorna la posizione usando le nuove direzioni
+
+        // Movimento indipendente dal giocatore
+        glm::vec3 autoMovement = shipForwardDirection * flightTimerSpeedFactor * deltaT;
+
+        // Movimento lungo gli assi della ship
+        glm::vec3 movement =
+                (shipForwardDirection * (-m.z) + // Movimento avanti/indietro nella direzione frontale
+                 shipRightDirection * m.x +      // Movimento laterale
+                 shipUpDirection * m.y)          // Movimento verticale
+                * (MOVE_SPEED * deltaT);         // Scala con velocità e tempo
+
+        // Somma il movimento automatico al movimento controllato
+        glm::vec3 totalMovement = movement + autoMovement;
+
+        // Aggiorna la posizione della ship
+        shipPos_x += totalMovement.x;
+        shipPos_y += totalMovement.y;
+        shipPos_z += totalMovement.z;
+
+//        shipPos_x  += MOVE_SPEED * m.x * deltaT + MOVE_SPEED * -m.z * deltaT * shipForwardDirection.x;
+//        shipPos_y  += MOVE_SPEED * m.y * deltaT + MOVE_SPEED * -m.z * deltaT * shipForwardDirection.y;
+//        shipPos_z  += MOVE_SPEED * m.z * deltaT /*+ MOVE_SPEED * m.z * deltaT * shipForwardDirection.z*/;
+
+        // Step 4: Costruisci la matrice finale con la nuova posizione aggiornata
+        blinnUbo.mMat =
+                glm::translate(glm::mat4(1), glm::vec3(shipPos_x, shipPos_y, shipPos_z))
+                * rotationMatrix
+                * glm::scale(glm::mat4(1), glm::vec3(0.025))
+                * baseTr;
+
+        // Step 5: Aggiorna la direzione della camera
+        cameraUpVector = glm::normalize(glm::cross(shipRightDirection, shipForwardDirection));
+
+
+
+
+//        blinnUbo.mMat =
+//                glm::translate(glm::mat4(1), glm::vec3(MOVE_SPEED * m.x * deltaT,
+//                                                                MOVE_SPEED * m.y * deltaT,
+//                                                                MOVE_SPEED * m.z * deltaT))
+//                * glm::rotate(glm::mat4(1), ROT_SPEED * r.y * deltaT, glm::vec3(0, 1, 0))
+//                * glm::rotate(glm::mat4(1), ROT_SPEED * r.x * deltaT, glm::vec3(1, 0, 0))
+//                * glm::rotate(glm::mat4(1), -ROT_SPEED * r.z * deltaT, glm::vec3(0, 0, 1))
+//                * glm::scale(glm::mat4(1), glm::vec3(0.025))
+//                * baseTr;
+
+        if(glfwGetKey(window, GLFW_KEY_N)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_N;
+
+                std::cout << "blinnUbo.mMat[2]_x    = " << glm::vec4(blinnUbo.mMat[2])[0]    << ";\n";
+                std::cout << "blinnUbo.mMat[2]_y    = " << glm::vec4(blinnUbo.mMat[2])[1]    << ";\n";
+                std::cout << "blinnUbo.mMat[2]_z    = " << glm::vec4(blinnUbo.mMat[2])[2]    << ";\n";
+                std::cout << "blinnUbo.mMat[0]_x    = " << glm::vec4(blinnUbo.mMat[0])[0]    << ";\n";
+                std::cout << "blinnUbo.mMat[0]_y    = " << glm::vec4(blinnUbo.mMat[0])[1]    << ";\n";
+                std::cout << "blinnUbo.mMat[0]_z    = " << glm::vec4(blinnUbo.mMat[0])[2]    << ";\n\n";
+
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_N) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+
+//        //Flight timer----------------
+//        static float flightTimer = 0;
+//
+//        if (liftOff){
+//
+//            //TODO: print flightTimer su schermo
+//
+//            int oldTime = static_cast<int>(flightTimer);
+//            float flightTimerSpeedFactor = flightTimer + (deltaT) * 1/2;
+//            flightTimer = flightTimer + deltaT;
+//            int newTime = static_cast<int>(flightTimer);
+//
+//            if (newTime == oldTime + 1){
+//                std::cout << "flightTimer    = " << newTime    << ";\n";
+//            }
+//
+//            //TODO: decidere durata volo
+//            int flightDuration = 5;
+//            if (newTime == flightDuration){
+//                std::cout << "Termino il volo \n";
+//                liftOff = false;
+//                finalPosition = flightTimerSpeedFactor;
+//            }
+//
+////            blinnUbo.mMat = glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,1))
+////                            * glm::translate(glm::mat4(1), glm::vec3(4.05 + flightTimerSpeedFactor, 0,0))
+////                            * glm::scale(glm::mat4(1), glm::vec3(0.025))
+////                            * baseTr;
+//
+//        }
 
         blinnUbo.mvpMat = ViewPrj * blinnUbo.mMat;
         blinnUbo.nMat = glm::inverse(glm::transpose(blinnUbo.mMat));
 
-		DSship.map(currentImage, &blinnUbo, 0);
+        DSship.map(currentImage, &blinnUbo, 0);
 
-		blinnMatParUbo.Power = 200.0;
-		DSship.map(currentImage, &blinnMatParUbo, 2);
+        blinnMatParUbo.Power = 200.0;
+        DSship.map(currentImage, &blinnMatParUbo, 2);
+
+        if(glfwGetKey(window, GLFW_KEY_B)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_B;
+
+                std::cout << "blinnUbo.mMat_x    = " << glm::vec3(blinnUbo.mMat[3])[0]    << ";\n";
+                std::cout << "blinnUbo.mMat_y    = " << glm::vec3(blinnUbo.mMat[3])[1]    << ";\n";
+                std::cout << "blinnUbo.mMat_z    = " << glm::vec3(blinnUbo.mMat[3])[2]    << ";\n";
+
+                std::cout << "shipPos_x    = " << shipPos_x    << ";\n";
+                std::cout << "shipPos_y    = " << shipPos_y    << ";\n";
+                std::cout << "shipPos_z    = " << shipPos_z    << ";\n";
+                std::cout << "shipRoll     = " << shipRoll     << ";\n";
+                std::cout << "shipPitch    = " << shipPitch    << ";\n";
+                std::cout << "shipYaw      = " << shipYaw      << ";\n";
+
+                std::cout << "shipForwardDirection_x      = " << shipForwardDirection.x      << ";\n";
+                std::cout << "shipForwardDirection_y      = " << shipForwardDirection.y      << ";\n";
+                std::cout << "shipForwardDirection_z      = " << shipForwardDirection.z      << ";\n\n";
+
+                std::cout << "shipRightDirection_x      = " << shipRightDirection.x      << ";\n";
+                std::cout << "shipRightDirection_y      = " << shipRightDirection.y      << ";\n";
+                std::cout << "shipRightDirection_z      = " << shipRightDirection.z      << ";\n\n";
+
+                std::cout << "shipUpDirection_x      = " << shipUpDirection.x      << ";\n";
+                std::cout << "shipUpDirection_y      = " << shipUpDirection.y      << ";\n";
+                std::cout << "shipUpDirection_z      = " << shipUpDirection.z      << ";\n\n";
+
+                std::cout << "cameraPosition_x      = " << cameraPosition.x      << ";\n";
+                std::cout << "cameraPosition_y      = " << cameraPosition.y      << ";\n";
+                std::cout << "cameraPosition_z      = " << cameraPosition.z      << ";\n\n";
+
+                std::cout << "cameraUpVector_x      = " << cameraUpVector.x      << ";\n";
+                std::cout << "cameraUpVector_y      = " << cameraUpVector.y      << ";\n";
+                std::cout << "cameraUpVector_z      = " << cameraUpVector.z      << ";\n\n";
+
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_B) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
 
 
-		EmissionUniformBufferObject emissionUbo{};
-		emissionUbo.mvpMat = ViewPrj * glm::translate(glm::mat4(1), gubo.lightDir * 40.0f) * baseTr;
-		DSsun.map(currentImage, &emissionUbo, 0);
-		
-		skyBoxUniformBufferObject sbubo{};
-		sbubo.mvpMat = M * glm::mat4(glm::mat3(Mv));
-		DSskyBox.map(currentImage, &sbubo, 0);
-		
+        EmissionUniformBufferObject emissionUbo{};
+        emissionUbo.mvpMat = ViewPrj * glm::translate(glm::mat4(1), gubo.lightDir * 40.0f) * baseTr;
+        DSsun.map(currentImage, &emissionUbo, 0);
+
+        skyBoxUniformBufferObject sbubo{};
+        sbubo.mvpMat = Mp * glm::mat4(glm::mat3(Mv));
+        DSskyBox.map(currentImage, &sbubo, 0);
+
 // **A10** Add to compute the uniforms and pass them to the shaders. You need two uniforms: one for the matrices, and the other for the material parameters.
         NormalUniformBufferObject nUbo{};
 
@@ -728,28 +971,28 @@ ShowTexture    = 0;
         earthUniformBufferObject earthUbo{};
 
         // The specular power of the uniform buffer containing the material parameters of the new object should be set to:
-		// XXX.Power = 200.0
-		// Where you replace XXX.Power with the field of the local variable corresponding to the uniform buffer object
+        // XXX.Power = 200.0
+        // Where you replace XXX.Power with the field of the local variable corresponding to the uniform buffer object
         earthUbo.pow = 200.0f;
 
-		// The textre angle parameter of the uniform buffer containing the material parameters of the new object should be set to: tTime * TangTurnTimeFact
-		// XXX.Ang = tTime * TangTurnTimeFact;
-		// Where you replace XXX.Ang with the local field of the variable corresponding to the uniform buffer object
+        // The textre angle parameter of the uniform buffer containing the material parameters of the new object should be set to: tTime * TangTurnTimeFact
+        // XXX.Ang = tTime * TangTurnTimeFact;
+        // Where you replace XXX.Ang with the local field of the variable corresponding to the uniform buffer object
         earthUbo.ang = tTime * TangTurnTimeFact;
 
-		// The selector for showing the clouds of the uniform buffer containing the material parameters of the new object should be set to:
-		// XXX.ShowCloud = ShowCloud
-		// Where you replace XXX.ShowCloud with the local field of the variable corresponding to the uniform buffer object
+        // The selector for showing the clouds of the uniform buffer containing the material parameters of the new object should be set to:
+        // XXX.ShowCloud = ShowCloud
+        // Where you replace XXX.ShowCloud with the local field of the variable corresponding to the uniform buffer object
         earthUbo.showCloud = ShowCloud;
 
-		// The selector for showing the clouds of the uniform buffer containing the material parameters of the new object should be set to:
-		// XXX.ShowTexture = ShowTexture
-		// Where you replace XXX.ShowTexture with the local field of the variable corresponding to the uniform buffer object
+        // The selector for showing the clouds of the uniform buffer containing the material parameters of the new object should be set to:
+        // XXX.ShowTexture = ShowTexture
+        // Where you replace XXX.ShowTexture with the local field of the variable corresponding to the uniform buffer object
         earthUbo.showTexture = ShowTexture;
 
-		// These informations should be used to fill the Uniform Buffer Object in Binding 6 of your DSL
+        // These informations should be used to fill the Uniform Buffer Object in Binding 6 of your DSL
         DS_earth.map(currentImage, &earthUbo, 6);
-	}
+    }
 };
 
 // This is the main: probably you do not need to touch this!

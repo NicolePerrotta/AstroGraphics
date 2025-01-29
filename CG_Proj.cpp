@@ -454,7 +454,7 @@ std::cout << "Initializing text\n";
             tTime = (tTime > TturnTime) ? (tTime - TturnTime) : tTime;
         }
 
-        //Ship position info-----------------------------------------------
+        //Ship position info--------------------------------------------------------------------------------------------
         static float shipPos_x  = 0;
         static float shipPos_y  = 4.05;
         static float shipPos_z  = 0;
@@ -470,7 +470,7 @@ std::cout << "Initializing text\n";
         glm::vec3 cameraPosition = shipPosition + glm::vec3(0, 0.1, 0.15);
         glm::vec3 cameraUpVector = glm::vec3(0, 1, 0);
 
-        //Launch countdown-------------------------
+        //Launch countdown----------------------------------------------------------------------------------------------
         static float LCTime = 0.0;
 
         static float countdown = false;
@@ -496,6 +496,35 @@ std::cout << "Initializing text\n";
             }
         }
 
+        //Flight timer--------------------------------------------------------------------------------------------------
+        static float flightTimer = 0;
+        float flightTimerSpeedFactor = 0;
+
+
+        if (liftOff){
+
+            //TODO: print flightTimer su schermo
+
+            int oldTime = static_cast<int>(flightTimer);
+//            float flightTimerSpeedFactor = flightTimer + (deltaT) * 1/2;
+            flightTimerSpeedFactor = flightTimer + (deltaT) * 1/2;
+            flightTimer = flightTimer + deltaT;
+            int newTime = static_cast<int>(flightTimer);
+
+            if (newTime == oldTime + 1){
+                std::cout << "flightTimer    = " << newTime    << ";\n";
+            }
+
+            //TODO: decidere durata volo
+            int flightDuration = 5;
+            if (newTime == flightDuration){
+                std::cout << "Termino il volo \n";
+                liftOff = false;
+                finalPosition = flightTimerSpeedFactor;
+            }
+
+        }
+
         const float ROT_SPEED = glm::radians(120.0f);
         const float MOVE_SPEED = 2.0f;
 
@@ -511,8 +540,6 @@ std::cout << "Initializing text\n";
                                                               MOVE_SPEED * m.z * deltaT)
         )* ViewMatrix;
 
-        glm::mat4 Mv_lookAt = glm::rotate(glm::mat4(1.0f), /*shipRoll*/0.0f, glm::vec3(0, 0, 1)) *
-                              glm::lookAt(cameraPosition, shipPosition, /*glm::vec3(0,1,0)*/cameraUpVector);
 
         static float subpassTimer = 0.0;
 
@@ -657,27 +684,32 @@ std::cout << "Initializing text\n";
         glm::mat4 Mp = glm::perspective(glm::radians(45.0f), Ar, 0.1f, 160.0f);
         Mp[1][1] *= -1;
 
+        glm::mat4 Mv_lookAt = glm::rotate(glm::mat4(1.0f), /*shipRoll*/0.0f, glm::vec3(0, 0, 1)) *
+                              glm::lookAt(cameraPosition, shipPosition, /*glm::vec3(0,1,0)*/cameraUpVector);
+
 //		glm::mat4 Mv = ViewMatrix;
         glm::mat4 Mv = Mv_lookAt;
 
         glm::mat4 ViewPrj = Mp * Mv;
         glm::mat4 baseTr = glm::mat4(1.0f);
 
-        // updates global uniforms
+        // updates global uniforms--------------------------------------------------------------------------------------
         // Global
         GlobalUniformBufferObject gubo{};
-        gubo.lightDir = glm::vec3(cos(glm::radians(135.0f)) * cos(cTime * angTurnTimeFact), sin(glm::radians(135.0f)), cos(glm::radians(135.0f)) * sin(cTime * angTurnTimeFact));
+        gubo.lightDir = glm::vec3(cos(glm::radians(135.0f)) * cos(cTime * angTurnTimeFact),
+                                  sin(glm::radians(135.0f)),
+                                  cos(glm::radians(135.0f)) * sin(cTime * angTurnTimeFact)
+                                  );
         gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-//        gubo.eyePos = glm::vec3(glm::inverse(ViewMatrix) * glm::vec4(0, 0, 0, 1));
-//        gubo.eyePos = glm::vec3(glm::inverse(Mv_lookAt) * glm::vec4(0, 0, 0, 1));
         gubo.eyePos = cameraPosition;
         DSGlobal.map(currentImage, &gubo, 0);
 
-        // objects
+        // objects------------------------------------------------------------------------------------------------------
         //FIXME: ship
         BlinnUniformBufferObject blinnUbo{};
         BlinnMatParUniformBufferObject blinnMatParUbo{};
 
+        {
 //		for(int j = 0; j < 4; j++) {
 //			for(int k = 0; k < 4; k++) {
 //				int i = j*4+k;
@@ -686,118 +718,26 @@ std::cout << "Initializing text\n";
 //				blinnUbo.nMat[i] = glm::inverse(glm::transpose(blinnUbo.mMat[i]));
 //			}
 //		}
-        //Flight timer----------------
-        static float flightTimer = 0;
-        float flightTimerSpeedFactor = 0;
-
-
-        if (liftOff){
-
-            //TODO: print flightTimer su schermo
-
-            int oldTime = static_cast<int>(flightTimer);
-//            float flightTimerSpeedFactor = flightTimer + (deltaT) * 1/2;
-            flightTimerSpeedFactor = flightTimer + (deltaT) * 1/2;
-            flightTimer = flightTimer + deltaT;
-            int newTime = static_cast<int>(flightTimer);
-
-            if (newTime == oldTime + 1){
-                std::cout << "flightTimer    = " << newTime    << ";\n";
-            }
-
-            //TODO: decidere durata volo
-            int flightDuration = 5;
-            if (newTime == flightDuration){
-                std::cout << "Termino il volo \n";
-                liftOff = false;
-                finalPosition = flightTimerSpeedFactor;
-            }
-
-//            blinnUbo.mMat = glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,1))
-//                            * glm::translate(glm::mat4(1), glm::vec3(4.05 + flightTimerSpeedFactor, 0,0))
-//                            * glm::scale(glm::mat4(1), glm::vec3(0.025))
-//                            * baseTr;
-
         }
 
-//        blinnUbo.mMat =
-//                glm::translate(glm::mat4(1), glm::vec3(4.05 + finalPosition, 0,0))
-//                * glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,1))
-//                * glm::scale(glm::mat4(1), glm::vec3(0.025))
-//                * baseTr;
-
-//        blinnUbo.mMat = glm::rotate(glm::mat4(1), ROT_SPEED * r.x * deltaT, glm::vec3(1, 0, 0)) * blinnUbo.mMat;
-//        blinnUbo.mMat = glm::rotate(glm::mat4(1), ROT_SPEED * r.y * deltaT, glm::vec3(0, 1, 0)) * blinnUbo.mMat;
-//        blinnUbo.mMat = glm::rotate(glm::mat4(1), -ROT_SPEED * r.z * deltaT, glm::vec3(0, 0, 1)) * blinnUbo.mMat;
-//        blinnUbo.mMat = glm::translate(glm::mat4(1), glm::vec3(MOVE_SPEED * m.x * deltaT, MOVE_SPEED * m.y * deltaT, MOVE_SPEED * m.z * deltaT)) * blinnUbo.mMat;
-
-//        blinnUbo.mMat =
-//                        glm::translate(glm::mat4(1), glm::vec3(0, 4.05 + finalPosition,0))
-//                        * glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,1))
-//                        * glm::scale(glm::mat4(1), glm::vec3(0.025))
-//                        * baseTr;
-
-//        shipPos_x  += MOVE_SPEED * m.x * deltaT + MOVE_SPEED * m.z * deltaT * cos(shipForwardDirection[0]);
-//        shipPos_y  += MOVE_SPEED * m.y * deltaT + MOVE_SPEED * m.z * deltaT * std::sin(shipForwardDirection[1]);
-//        shipPos_z  += MOVE_SPEED * m.z * deltaT /*+ MOVE_SPEED * m.z * deltaT * std::cos(shipForwardDirection.z)*/;
         shipRoll   += ROT_SPEED * r.x * deltaT;
         shipPitch  += -ROT_SPEED * r.z * deltaT;
         shipYaw    += -ROT_SPEED * r.y * deltaT;
 
-        //Controllo limiti rotazioni
-//        const float PITCH_MIN   = -glm::radians(-90.0f);
-//        const float PITCH_MAX   =  glm::radians(90.0f);
-//        const float YAW_MIN     = -glm::radians(-180.0f);
-//        const float YAW_MAX     =  glm::radians(180.0f);
-//        const float ROLL_MIN    = -glm::radians(-180.0f);
-//        const float ROLL_MAX    =  glm::radians(180.0f);
-//
-//        if (shipPitch < PITCH_MIN) shipPitch = PITCH_MIN;
-//        if (shipPitch > PITCH_MAX) shipPitch = PITCH_MAX;
-//
-//        if (shipYaw < YAW_MIN) shipYaw = YAW_MIN;
-//        if (shipYaw > YAW_MAX) shipYaw = YAW_MAX;
-//
-//        if (shipRoll < ROLL_MIN) shipRoll = ROLL_MIN;
-//        if (shipRoll > ROLL_MAX) shipRoll = ROLL_MAX;
+        //Update the direction of the ship and of the camera
 
-//        blinnUbo.mMat =
-//                glm::translate(glm::mat4(1), glm::vec3(shipPos_x, shipPos_y, shipPos_z))
-//                * glm::rotate(glm::mat4(1), shipYaw, glm::vec3(0, 1, 0))
-//                * glm::rotate(glm::mat4(1), shipPitch, glm::vec3(1, 0, 0))
-//                * glm::rotate(glm::mat4(1), shipRoll, glm::vec3(0, 0, 1))
-//                * glm::scale(glm::mat4(1), glm::vec3(0.025))
-//                * baseTr;
-
-
-
-//        blinnUbo.mMat =
-//                glm::translate(glm::mat4(1), glm::vec3(shipPos_x, shipPos_y, shipPos_z))
-//                * glm::rotate(glm::mat4(1), shipYaw,     shipUpDirection )
-//                * glm::rotate(glm::mat4(1), shipPitch,   shipForwardDirection )
-//                * glm::rotate(glm::mat4(1), shipRoll,    shipRightDirection )
-//                * glm::scale(glm::mat4(1), glm::vec3(0.025))
-//                * baseTr;
-//
-//        //TODO: calcolare qui gli assi normali e poi li vado a mettere sotto per la direzione di rotazione
-//        //Update the direction of the ship and of the camera
-//        shipForwardDirection =  glm::normalize(glm::vec3(blinnUbo.mMat * glm::vec4(1,0,0,0)));
-//        shipRightDirection =    glm::normalize(glm::vec3(blinnUbo.mMat * glm::vec4(0,0,1,0)));
-//        shipUpDirection =       glm::normalize(glm::vec3(blinnUbo.mMat * glm::vec4(0,1,0,0)));
-//        cameraUpVector =        glm::normalize(glm::cross(shipRightDirection, shipForwardDirection));
-
-        // Step 1: Calcola la matrice di rotazione aggiornata
+        // Step 1: Calcola la matrice di rotazione aggiornata-----------------------------------------------------------
         glm::mat4 rotationMatrix =
-                glm::rotate(glm::mat4(1), shipYaw, glm::vec3(0, 1, 0)) // Rotazione Yaw
-                * glm::rotate(glm::mat4(1), shipPitch, glm::vec3(1, 0, 0)) // Rotazione Pitch
-                * glm::rotate(glm::mat4(1), shipRoll, glm::vec3(0, 0, 1)); // Rotazione Roll
+                  glm::rotate(glm::mat4(1), shipYaw,    glm::vec3(0, 1, 0))
+                * glm::rotate(glm::mat4(1), shipPitch,  glm::vec3(1, 0, 0))
+                * glm::rotate(glm::mat4(1), shipRoll,   glm::vec3(0, 0, 1));
 
-        // Step 2: Aggiorna le direzioni della ship
+        // Step 2: Aggiorna le direzioni della ship---------------------------------------------------------------------
         shipForwardDirection = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(1, 0, 0, 0)));
         shipRightDirection   = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(0, 0, 1, 0)));
         shipUpDirection      = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(0, 1, 0, 0)));
 
-        // Step 3: Aggiorna la posizione usando le nuove direzioni
+        // Step 3: Aggiorna la posizione usando le nuove direzioni------------------------------------------------------
 
         // Movimento indipendente dal giocatore
         glm::vec3 autoMovement = shipForwardDirection * flightTimerSpeedFactor * deltaT;
@@ -817,11 +757,7 @@ std::cout << "Initializing text\n";
         shipPos_y += totalMovement.y;
         shipPos_z += totalMovement.z;
 
-//        shipPos_x  += MOVE_SPEED * m.x * deltaT + MOVE_SPEED * -m.z * deltaT * shipForwardDirection.x;
-//        shipPos_y  += MOVE_SPEED * m.y * deltaT + MOVE_SPEED * -m.z * deltaT * shipForwardDirection.y;
-//        shipPos_z  += MOVE_SPEED * m.z * deltaT /*+ MOVE_SPEED * m.z * deltaT * shipForwardDirection.z*/;
-
-        // Step 4: Costruisci la matrice finale con la nuova posizione aggiornata
+        // Step 4: Costruisci la matrice finale con la nuova posizione aggiornata---------------------------------------
         blinnUbo.mMat =
                 glm::translate(glm::mat4(1), glm::vec3(shipPos_x, shipPos_y, shipPos_z))
                 * rotationMatrix
@@ -831,18 +767,36 @@ std::cout << "Initializing text\n";
         // Step 5: Aggiorna la direzione della camera
         cameraUpVector = glm::normalize(glm::cross(shipRightDirection, shipForwardDirection));
 
+        if(glfwGetKey(window, GLFW_KEY_L)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_L;
 
+                std::cout << "---\n";
+                std::cout << "cameraPosition_x    = " << cameraPosition.x    << ";\n";
+                std::cout << "cameraPosition_y    = " << cameraPosition.y    << ";\n";
+                std::cout << "cameraPosition_z    = " << cameraPosition.z    << ";\n\n";
 
+                std::cout << "shipPosition_x    = " << shipPosition.x    << ";\n";
+                std::cout << "shipPosition_y    = " << shipPosition.y    << ";\n";
+                std::cout << "shipPosition_z    = " << shipPosition.z    << ";\n\n";
 
-//        blinnUbo.mMat =
-//                glm::translate(glm::mat4(1), glm::vec3(MOVE_SPEED * m.x * deltaT,
-//                                                                MOVE_SPEED * m.y * deltaT,
-//                                                                MOVE_SPEED * m.z * deltaT))
-//                * glm::rotate(glm::mat4(1), ROT_SPEED * r.y * deltaT, glm::vec3(0, 1, 0))
-//                * glm::rotate(glm::mat4(1), ROT_SPEED * r.x * deltaT, glm::vec3(1, 0, 0))
-//                * glm::rotate(glm::mat4(1), -ROT_SPEED * r.z * deltaT, glm::vec3(0, 0, 1))
-//                * glm::scale(glm::mat4(1), glm::vec3(0.025))
-//                * baseTr;
+                std::cout << "shipUpDirection_x    = " << shipUpDirection.x    << ";\n";
+                std::cout << "shipUpDirection_y    = " << shipUpDirection.y    << ";\n";
+                std::cout << "shipUpDirection_z    = " << shipUpDirection.z    << ";\n\n";
+
+                std::cout << "cameraUpVector_x    = " << cameraUpVector.x    << ";\n";
+                std::cout << "cameraUpVector_y    = " << cameraUpVector.y    << ";\n";
+                std::cout << "cameraUpVector_z    = " << cameraUpVector.z    << ";\n\n";
+
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_L) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+
 
         if(glfwGetKey(window, GLFW_KEY_N)) {
             if(!debounce) {
@@ -864,36 +818,6 @@ std::cout << "Initializing text\n";
             }
         }
 
-//        //Flight timer----------------
-//        static float flightTimer = 0;
-//
-//        if (liftOff){
-//
-//            //TODO: print flightTimer su schermo
-//
-//            int oldTime = static_cast<int>(flightTimer);
-//            float flightTimerSpeedFactor = flightTimer + (deltaT) * 1/2;
-//            flightTimer = flightTimer + deltaT;
-//            int newTime = static_cast<int>(flightTimer);
-//
-//            if (newTime == oldTime + 1){
-//                std::cout << "flightTimer    = " << newTime    << ";\n";
-//            }
-//
-//            //TODO: decidere durata volo
-//            int flightDuration = 5;
-//            if (newTime == flightDuration){
-//                std::cout << "Termino il volo \n";
-//                liftOff = false;
-//                finalPosition = flightTimerSpeedFactor;
-//            }
-//
-////            blinnUbo.mMat = glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0,0,1))
-////                            * glm::translate(glm::mat4(1), glm::vec3(4.05 + flightTimerSpeedFactor, 0,0))
-////                            * glm::scale(glm::mat4(1), glm::vec3(0.025))
-////                            * baseTr;
-//
-//        }
 
         blinnUbo.mvpMat = ViewPrj * blinnUbo.mMat;
         blinnUbo.nMat = glm::inverse(glm::transpose(blinnUbo.mMat));

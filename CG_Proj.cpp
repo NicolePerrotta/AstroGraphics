@@ -6,7 +6,17 @@
 
 std::vector<SingleText> outText = {
 	{2, {"Adding an object", "Press SPACE to save the screenshots","",""}, 0, 0},
-	{1, {"Saving Screenshots. Please wait.", "", "",""}, 0, 0}
+	{1, {"Saving Screenshots. Please wait.", "", "",""}, 0, 0},
+	{1, {"Launch in: 10"}, 0, 0},
+	{1, {"Launch in: 9"}, 0, 0},
+	{1, {"Launch in: 8"}, 0, 0},
+	{1, {"Launch in: 7"}, 0, 0},
+	{1, {"Launch in: 6"}, 0, 0},
+	{1, {"Launch in: 5"}, 0, 0},
+	{1, {"Launch in: 4"}, 0, 0},
+	{1, {"Launch in: 3"}, 0, 0},
+	{1, {"Launch in: 2"}, 0, 0},
+	{1, {"Launch in: 1"}, 0, 0}
 };
 
 // The uniform buffer object used in this example
@@ -484,12 +494,16 @@ std::cout << "Initializing text\n";
             int newTime = static_cast<int>(LCTime);
 
             if (newTime == oldTime + 1){
+            	currScene = newTime+1;
+            	RebuildPipeline();
                 newTime = 11 - newTime;
                 std::cout << "countdown    = " << newTime    << ";\n";
             }
 
             if (newTime == 11){
                 std::cout << "Inizio il lancio \n";
+            	currScene = 0;
+            	RebuildPipeline();
                 countdown = false;
                 liftOff = true;
                 std::cout << "La navicella si muove \n";

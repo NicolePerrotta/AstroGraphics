@@ -740,13 +740,27 @@ std::cout << "Initializing text\n";
 
         //Update the direction of the ship and of the camera
 
-        // Step 1: Calcola la matrice di rotazione aggiornata-----------------------------------------------------------
-        glm::mat4 rotationMatrix =
-                  glm::rotate(glm::mat4(1), shipYaw,    glm::vec3(0, 1, 0))
+        // Usa la rotationMatrix accumulata dal frame precedente, che viene aggiornata a ogni frame
+        static glm::mat4 rotationMatrix =
+                glm::rotate(glm::mat4(1), shipYaw,    glm::vec3(0, 1, 0))
                 * glm::rotate(glm::mat4(1), shipRoll,  glm::vec3(1, 0, 0))
                 * glm::rotate(glm::mat4(1), shipPitch,   glm::vec3(0, 0, 1));
 
-        // Step 2: Aggiorna le direzioni della ship---------------------------------------------------------------------
+        //assi locali
+        shipForwardDirection = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(1, 0, 0, 0)));
+        shipRightDirection   = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(0, 0, 1, 0)));
+        shipUpDirection      = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(0, 1, 0, 0)));
+
+        //Rotation matrix attorno agli assi locali
+        glm::mat4 incrementalRotation =
+                glm::rotate(glm::mat4(1), -ROT_SPEED * r.y * deltaT, shipUpDirection) *    // Yaw attorno all'asse Up locale
+                glm::rotate(glm::mat4(1), ROT_SPEED * r.x * deltaT, shipRightDirection) * // Pitch attorno all'asse Right locale
+                glm::rotate(glm::mat4(1), -ROT_SPEED * r.z * deltaT, shipForwardDirection); // Roll attorno all'asse Forward locale
+
+        //Aggiorna la rotationMatrix combinando la nuova rotazione con la precedente
+        rotationMatrix = incrementalRotation * rotationMatrix;
+
+        //Aggiorna nuovamente gli assi locali con la nuova matrice aggiornata
         shipForwardDirection = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(1, 0, 0, 0)));
         shipRightDirection   = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(0, 0, 1, 0)));
         shipUpDirection      = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(0, 1, 0, 0)));

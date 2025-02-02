@@ -38,6 +38,17 @@ struct EmissionUniformBufferObject {
 	alignas(16) glm::mat4 mvpMat;
 };
 
+struct EngineUniformBufferObject {
+    alignas(16) glm::vec3 lightDir[1];
+    alignas(16) glm::vec3 lightPos[1];
+    alignas(16) glm::vec4 lightColor[1];
+    alignas(4) float cosIn;
+    alignas(4) float cosOut;
+    alignas(16) glm::vec3 eyePos;
+    alignas(16) glm::vec4 eyeDir;
+    alignas(4) float lightOn;
+};
+
 struct GlobalUniformBufferObject {
 	alignas(16) glm::vec3 lightDir;
 	alignas(16) glm::vec4 lightColor;
@@ -199,7 +210,8 @@ class CG_Proj : public BaseProject {
                 {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
                 {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1},
                 {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4, 1},
-                {6, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(earthUniformBufferObject), 1}
+                {6, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(earthUniformBufferObject), 1},
+                {7, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(EngineUniformBufferObject), 1}
         });
 
 		// Vertex descriptors
@@ -282,7 +294,7 @@ class CG_Proj : public BaseProject {
 		// Must be set before initializing the text and the scene
 // **A10** Update the number of elements to correctly size the descriptor sets pool
         //TODO: check the correct number after deletion of ships
-		DPSZs.uniformBlocksInPool = 7;
+		DPSZs.uniformBlocksInPool = 8;
 		DPSZs.texturesInPool = 9;
 		DPSZs.setsInPool = 5;
 
@@ -540,6 +552,7 @@ std::cout << "Initializing text\n";
                 std::cout << "Termino il volo \n";
                 liftOff = false;
                 finalPosition = flightTimerSpeedFactor;
+                flightTimerSpeedFactor = 0;
             }
 
         }
@@ -992,6 +1005,23 @@ std::cout << "Initializing text\n";
                 curDebounce = 0;
             }
         }
+
+        EngineUniformBufferObject engineUbo{};
+
+        glm::vec3 engineLightOffset = glm::vec3(0.0, 0.0f, 0.0f);//FIXME: trovare a mano la posizione
+        glm::vec3 engineLightPosition = shipPosition + glm::vec3(rotationMatrix * glm::vec4(engineLightOffset, 1.0f));
+
+        engineUbo.lightDir[0]    = shipForwardDirection;
+        engineUbo.lightPos[0]    = engineLightPosition;
+        engineUbo.lightColor[0]  = glm::vec4(1.0f, 0.2f, 0.0f, 1.0f);
+        engineUbo.cosIn          = glm::cos(glm::radians(20.0f));
+        engineUbo.cosOut         = glm::cos(glm::radians(35.0f));
+        engineUbo.eyePos         = cameraPosition; // oppure la posizione della camera attuale
+        engineUbo.eyeDir         = glm::vec4(/* direzione della camera, per esempio: */ 0.0f, 0.0f, -1.0f, 0.0f); //FIXME: verificare
+        engineUbo.lightOn        = (m.z > 0 || -m.z > 0 || flightTimerSpeedFactor!=0) ? 1.0f : 0.0f;
+
+        DS_earth.map(currentImage, &engineUbo, 7);
+
 
 
         EmissionUniformBufferObject emissionUbo{};

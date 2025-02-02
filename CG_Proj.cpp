@@ -477,8 +477,13 @@ std::cout << "Initializing text\n";
         glm::vec3 shipRightDirection    = glm::vec3(0.0f, 0.0f, 1.0f);
         glm::vec3 shipUpDirection       = glm::vec3(0.0f, 1.0f, 0.0f);
 
-        glm::vec3 cameraPosition = shipPosition + glm::vec3(0, 0.1, 0.15);
+        static glm::vec3 cameraOffset = glm::vec3(0.0f, 0.1f, 0.15f);
+        glm::vec3 cameraPosition = shipPosition + cameraOffset;
         glm::vec3 cameraUpVector = glm::vec3(0, 1, 0);
+        //0: look-At (default), 1: look-In
+        static int cameraMode = 0;
+        //1: forward (default), -1: backward
+        static float cameraDirectionLookIn = 1.0;
 
         //Launch countdown----------------------------------------------------------------------------------------------
         static float LCTime = 0.0;
@@ -693,18 +698,50 @@ std::cout << "Initializing text\n";
             }
         }
 
+        if(glfwGetKey(window, GLFW_KEY_1)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_1;
+
+                std::cout << "Premuto 1: look-at (1)\n";
+                cameraMode = 0;
+                cameraOffset = glm::vec3(0.0f, 0.1f, 0.15f);
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_1) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+
+        if(glfwGetKey(window, GLFW_KEY_2)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_2;
+
+                std::cout << "Premuto 2: look-at (2)\n";
+                cameraMode = 0;
+                cameraOffset = glm::vec3(0.0f, 0.2f, 0.35f);
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_2) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+
 
         // Here is where you actually update your uniforms
         glm::mat4 Mp = glm::perspective(glm::radians(45.0f), Ar, 0.001f, 160.0f);
         Mp[1][1] *= -1;
 
-        glm::mat4 Mv_lookAt = glm::rotate(glm::mat4(1.0f), /*shipRoll*/0.0f, glm::vec3(0, 0, 1)) *
-                              glm::lookAt(cameraPosition, shipPosition, /*glm::vec3(0,1,0)*/cameraUpVector);
-
-//		glm::mat4 Mv = ViewMatrix;
-        glm::mat4 Mv = Mv_lookAt;
-
-        glm::mat4 ViewPrj = Mp * Mv;
+//        glm::mat4 Mv_lookAt = glm::rotate(glm::mat4(1.0f), /*shipRoll*/0.0f, glm::vec3(0, 0, 1)) *
+//                              glm::lookAt(cameraPosition, shipPosition, /*glm::vec3(0,1,0)*/cameraUpVector);
+//
+////		glm::mat4 Mv = ViewMatrix;
+//        glm::mat4 Mv = Mv_lookAt;
+//
+//        glm::mat4 ViewPrj = Mp * Mv;
         glm::mat4 baseTr = glm::mat4(1.0f);
 
         // updates global uniforms--------------------------------------------------------------------------------------
@@ -794,6 +831,63 @@ std::cout << "Initializing text\n";
 
         // Step 5: Aggiorna la direzione della camera
         cameraUpVector = glm::normalize(glm::cross(shipRightDirection, shipForwardDirection));
+        glm::mat4 cameraMatrix =
+                glm::translate( glm::mat4(1.0f), cameraPosition /*+ glm::vec3(-0.2,0.2,0)*/) *
+                glm::rotate(    glm::mat4(1.0f), shipYaw - glm::radians(90.0f)*cameraDirectionLookIn, shipUpDirection) *
+                glm::rotate(    glm::mat4(1.0f), shipPitch,  shipRightDirection) *
+                glm::rotate(    glm::mat4(1.0f), shipRoll, shipForwardDirection);
+
+        //FIXME: upVector è stato scelto constante verso y globale per un'effetto visivo migliore,
+        // ma usando la direzione data da cameraUpVector, è possibile avere una "vera" look-At che segue l'upVector del oggetto
+        glm::mat4 Mv_lookAt = glm::rotate(glm::mat4(1.0f), /*shipRoll*/0.0f, glm::vec3(0, 0, 1)) *
+                              glm::lookAt(cameraPosition, shipPosition, glm::vec3(0,1,0)/*cameraUpVector*/);
+
+        glm::mat4 Mv_lookIn = glm::inverse(cameraMatrix);
+
+//		glm::mat4 Mv = ViewMatrix;
+        //Default view
+
+
+        if(glfwGetKey(window, GLFW_KEY_3)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_3;
+
+                std::cout << "Premuto 3: look-in (1 - forward)\n";
+                cameraMode = 1;
+                cameraOffset = glm::vec3(0.0);
+                cameraDirectionLookIn = 1.0;
+//                Mv = Mv_lookIn;
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_3) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+
+        if(glfwGetKey(window, GLFW_KEY_4)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_4;
+
+//                cameraOffset = glm::vec3(0, 0.1, 0);
+                std::cout << "Premuto 4: look-in (2 - backward)\n";
+                cameraMode = 1;
+                cameraOffset = /*glm::vec3(0.0,0.5,0.0)*/ shipForwardDirection * (-0.5f);
+                cameraDirectionLookIn = -1.0;
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_4) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+
+        glm::mat4 Mv = (cameraMode == 0) ? Mv_lookAt : Mv_lookIn;
+
+        glm::mat4 ViewPrj = Mp * Mv;
+
 
         if(glfwGetKey(window, GLFW_KEY_L)) {
             if(!debounce) {

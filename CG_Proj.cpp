@@ -263,7 +263,7 @@ class CG_Proj : public BaseProject {
         P_Normal.init(this, &VD_Normal,  "shaders/NormalMapVert.spv",    "shaders/NormalMapFrag.spv", {&DSLGlobal, &DSL_Normal});
 
 		// Create models
-		Mship.init(this, &VDBlinn, "models/X-WING-baker.obj", OBJ);
+		Mship.init(this, &VDBlinn, "models/Luminaris.obj", OBJ);
 		Msun.init(this, &VDEmission, "models/Sphere.obj", OBJ);
 		MskyBox.init(this, &VDskyBox, "models/SkyBoxCube.obj", OBJ);
 // **A10** Place here the loading of the model. It should be contained in file "models/Sphere.gltf", it should use the
@@ -271,7 +271,7 @@ class CG_Proj : public BaseProject {
         M_earth.init(this, &VD_Normal, "models/Sphere.gltf", GLTF);
 
 		// Create the textures
-		Tship.init(this, "textures/XwingColors.png");
+		Tship.init(this, "textures/Luminaris Diffuse.tga");
 		Tsun.init(this, "textures/2k_sun.jpg");
 		TskyBox.init(this, "textures/sky-night-star-milky-way-texture-atmosphere-153102-pxhere.com.jpg");
 		Tstars.init(this, "textures/constellation_figures.png");
@@ -478,7 +478,7 @@ std::cout << "Initializing text\n";
 
         //Ship position info--------------------------------------------------------------------------------------------
         static float shipPos_x  = 0;
-        static float shipPos_y  = 4.05;
+        static float shipPos_y  = 4.1;
         static float shipPos_z  = 0;
         static float shipRoll   = glm::radians(00.0f);
         static float shipPitch  = glm::radians(90.0f);
@@ -839,7 +839,7 @@ std::cout << "Initializing text\n";
         blinnUbo.mMat =
                 glm::translate(glm::mat4(1), glm::vec3(shipPos_x, shipPos_y, shipPos_z))
                 * rotationMatrix
-                * glm::scale(glm::mat4(1), glm::vec3(0.025))
+                * glm::scale(glm::mat4(1), glm::vec3(0.0025))
                 * baseTr;
 
         if(glfwGetKey(window, GLFW_KEY_3)) {
@@ -849,7 +849,10 @@ std::cout << "Initializing text\n";
 
                 std::cout << "Premuto 3: look-in (1 - forward)\n";
                 cameraMode = 1;
-                cameraOffset = glm::vec3(0.0);
+
+                //Offset rispetto alle coordinate locali della ship
+                cameraOffset = glm::vec3(0.0,0.02,0.0);
+
                 cameraDirectionLookIn = 1.0;
 //                Mv = Mv_lookIn;
             }
@@ -869,8 +872,9 @@ std::cout << "Initializing text\n";
                 cameraMode = 1;
 
                 //Offset rispetto alle coordinate locali della ship
-                cameraOffset = glm::vec3(0.0,0.0,0.0);
+                cameraOffset = glm::vec3(0.0,0.02,0.0);
 //                cameraPosition = shipPosition + cameraOffset;
+
                 cameraDirectionLookIn = -1.0;
             }
         } else {

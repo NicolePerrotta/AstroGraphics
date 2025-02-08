@@ -5,7 +5,7 @@
 
 
 std::vector<SingleText> outText = {
-	{2, {"Adding an object", "Press SPACE to save the screenshots","",""}, 0, 0},
+	{2, {"Press SPACE to start the liftoff", "","",""}, 0, 0},
 	{1, {"Saving Screenshots. Please wait.", "", "",""}, 0, 0},
 	{1, {"Launch in: 10"}, 0, 0},
 	{1, {"Launch in: 9"}, 0, 0},
@@ -273,7 +273,7 @@ class CG_Proj : public BaseProject {
 		// Create the textures
 		Tship.init(this, "textures/XwingColors.png");
 		Tsun.init(this, "textures/2k_sun.jpg");
-		TskyBox.init(this, "textures/starmap_g4k.jpg");
+		TskyBox.init(this, "textures/sky-night-star-milky-way-texture-atmosphere-153102-pxhere.com.jpg");
 		Tstars.init(this, "textures/constellation_figures.png");
 // **A10** Place here the loading of the four textures
 		// Diffuse color of the planet in: "2k_earth_daymap.jpg"
@@ -482,7 +482,7 @@ std::cout << "Initializing text\n";
         static float shipPos_z  = 0;
         static float shipRoll   = glm::radians(00.0f);
         static float shipPitch  = glm::radians(90.0f);
-        static float shipYaw    = glm::radians(0.0f);
+        static float shipYaw    = glm::radians(-90.0f);
 
         glm::vec3 shipPosition = glm::vec3(shipPos_x, shipPos_y, shipPos_z);
         glm::vec3 shipForwardDirection  = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -758,15 +758,15 @@ std::cout << "Initializing text\n";
         glm::mat4 baseTr = glm::mat4(1.0f);
 
         // updates global uniforms--------------------------------------------------------------------------------------
-        // Global
-        GlobalUniformBufferObject gubo{};
-        gubo.lightDir = glm::vec3(cos(glm::radians(135.0f)) * cos(cTime * angTurnTimeFact),
-                                  sin(glm::radians(135.0f)),
-                                  cos(glm::radians(135.0f)) * sin(cTime * angTurnTimeFact)
-                                  );
-        gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-        gubo.eyePos = cameraPosition;
-        DSGlobal.map(currentImage, &gubo, 0);
+//        // Global
+//        GlobalUniformBufferObject gubo{};
+//        gubo.lightDir = glm::vec3(cos(glm::radians(135.0f)) * cos(cTime * angTurnTimeFact),
+//                                  sin(glm::radians(135.0f)),
+//                                  cos(glm::radians(135.0f)) * sin(cTime * angTurnTimeFact)
+//                                  );
+//        gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+//        gubo.eyePos = cameraPosition;
+//        DSGlobal.map(currentImage, &gubo, 0);
 
         // objects------------------------------------------------------------------------------------------------------
         //FIXME: ship
@@ -842,25 +842,6 @@ std::cout << "Initializing text\n";
                 * glm::scale(glm::mat4(1), glm::vec3(0.025))
                 * baseTr;
 
-        // Step 5: Aggiorna la direzione della camera
-        cameraUpVector = glm::normalize(glm::cross(shipRightDirection, shipForwardDirection));
-        glm::mat4 cameraMatrix =
-                glm::translate( glm::mat4(1.0f), cameraPosition /*+ glm::vec3(-0.2,0.2,0)*/) *
-                glm::rotate(    glm::mat4(1.0f), shipYaw - glm::radians(90.0f)*cameraDirectionLookIn, shipUpDirection) *
-                glm::rotate(    glm::mat4(1.0f), shipPitch,  shipRightDirection) *
-                glm::rotate(    glm::mat4(1.0f), shipRoll, shipForwardDirection);
-
-        //FIXME: upVector è stato scelto constante verso y globale per un'effetto visivo migliore,
-        // ma usando la direzione data da cameraUpVector, è possibile avere una "vera" look-At che segue l'upVector del oggetto
-        glm::mat4 Mv_lookAt = glm::rotate(glm::mat4(1.0f), /*shipRoll*/0.0f, glm::vec3(0, 0, 1)) *
-                              glm::lookAt(cameraPosition, shipPosition, glm::vec3(0,1,0)/*cameraUpVector*/);
-
-        glm::mat4 Mv_lookIn = glm::inverse(cameraMatrix);
-
-//		glm::mat4 Mv = ViewMatrix;
-        //Default view
-
-
         if(glfwGetKey(window, GLFW_KEY_3)) {
             if(!debounce) {
                 debounce = true;
@@ -878,7 +859,6 @@ std::cout << "Initializing text\n";
                 curDebounce = 0;
             }
         }
-
         if(glfwGetKey(window, GLFW_KEY_4)) {
             if(!debounce) {
                 debounce = true;
@@ -887,7 +867,10 @@ std::cout << "Initializing text\n";
 //                cameraOffset = glm::vec3(0, 0.1, 0);
                 std::cout << "Premuto 4: look-in (2 - backward)\n";
                 cameraMode = 1;
-                cameraOffset = /*glm::vec3(0.0,0.5,0.0)*/ shipForwardDirection * (-0.5f);
+
+                //Offset rispetto alle coordinate locali della ship
+                cameraOffset = glm::vec3(0.0,0.0,0.0);
+//                cameraPosition = shipPosition + cameraOffset;
                 cameraDirectionLookIn = -1.0;
             }
         } else {
@@ -896,6 +879,28 @@ std::cout << "Initializing text\n";
                 curDebounce = 0;
             }
         }
+
+        // Step 5: Aggiorna la direzione della camera
+        cameraUpVector = glm::normalize(glm::cross(shipRightDirection, shipForwardDirection));
+
+        //Aggiorna la posizione della camera solo in look-in
+        if (cameraMode == 1){
+            cameraPosition = shipPosition + glm::vec3(rotationMatrix * glm::vec4(cameraOffset, 1.0f));
+        }
+
+        glm::mat4 cameraMatrix =
+                glm::translate( glm::mat4(1.0f), cameraPosition) *
+                glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f) * cameraDirectionLookIn, shipUpDirection) *
+                rotationMatrix;
+
+        glm::mat4 Mv_lookAt = glm::rotate(glm::mat4(1.0f), /*shipRoll*/0.0f, glm::vec3(0, 0, 1)) * //TODO: per tremolio modificare qua l'angolo
+                              glm::lookAt(cameraPosition, shipPosition, /*glm::vec3(0,1,0)*/cameraUpVector);
+
+        glm::mat4 Mv_lookIn = glm::inverse(cameraMatrix);
+
+//		glm::mat4 Mv = ViewMatrix;
+        //Default view
+
 
         glm::mat4 Mv = (cameraMode == 0) ? Mv_lookAt : Mv_lookIn;
 
@@ -962,6 +967,17 @@ std::cout << "Initializing text\n";
         blinnMatParUbo.Power = 200.0;
         DSship.map(currentImage, &blinnMatParUbo, 2);
 
+
+        // Global
+        GlobalUniformBufferObject gubo{};
+        gubo.lightDir = glm::vec3(cos(glm::radians(135.0f)) * cos(cTime * angTurnTimeFact),
+                                  sin(glm::radians(135.0f)),
+                                  cos(glm::radians(135.0f)) * sin(cTime * angTurnTimeFact)
+        );
+        gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        gubo.eyePos = cameraPosition;
+        DSGlobal.map(currentImage, &gubo, 0);
+
         if(glfwGetKey(window, GLFW_KEY_B)) {
             if(!debounce) {
                 debounce = true;
@@ -1005,6 +1021,7 @@ std::cout << "Initializing text\n";
                 curDebounce = 0;
             }
         }
+
 
         EngineUniformBufferObject engineUbo{};
 

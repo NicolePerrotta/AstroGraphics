@@ -604,6 +604,8 @@ std::cout << "Initializing text\n";
         static float countdown = false;
         static float liftOff = false;
 
+        float tremorFrequency = 20.0f;  // Frequenza dell'oscillazione
+        float tremorAngle = 0;
 
         if(countdown) {
 
@@ -617,6 +619,10 @@ std::cout << "Initializing text\n";
                 newTime = 11 - newTime;
                 std::cout << "countdown    = " << newTime    << ";\n";
             }
+
+            //Tremolio camera durante il countdown
+            float tremorIntensity = 0.02f * LCTime; // Aumenta l'intensità nel tempo
+            tremorAngle = tremorIntensity * sin(tremorFrequency * LCTime);
 
             if (newTime == 11){
                 std::cout << "Inizio il lancio \n";
@@ -655,14 +661,18 @@ std::cout << "Initializing text\n";
                     case 3:
                     case 4:
                     case 5:
+                    case 6:
                         keyPressed = 2;
+                        break;
+                    case 7:
+                        keyPressed = 3;
                         break;
 
                 }
             }
 
             //TODO: decidere durata volo
-            int flightDuration = 5;
+            int flightDuration = 7;
             if (newTime == flightDuration){
                 std::cout << "Termino il volo \n";
                 liftOff = false;
@@ -1019,7 +1029,7 @@ std::cout << "Initializing text\n";
                 glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f) * cameraDirectionLookIn, shipUpDirection) *
                 rotationMatrix;
 
-        glm::mat4 Mv_lookAt = glm::rotate(glm::mat4(1.0f), /*shipRoll*/0.0f, glm::vec3(0, 0, 1)) * //TODO: per tremolio modificare qua l'angolo
+        glm::mat4 Mv_lookAt = glm::rotate(glm::mat4(1.0f), /*shipRoll*//*0.0f*/tremorAngle, glm::vec3(0, 0, 1)) * //TODO: per tremolio modificare qua l'angolo
                               glm::lookAt(cameraPosition, shipPosition, /*glm::vec3(0,1,0)*/cameraUpVector);
 
         glm::mat4 Mv_lookIn = glm::inverse(cameraMatrix);

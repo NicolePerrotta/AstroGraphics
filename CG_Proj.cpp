@@ -162,6 +162,11 @@ class CG_Proj : public BaseProject {
     Texture T_Mercury, T_Venus, T_Moon, T_Mars, T_Jupiter, T_Saturn, T_Uranus, T_Neptune;
     DescriptorSet DS_Mercury, DS_Venus, DS_Moon, DS_Mars, DS_Jupiter, DS_Saturn, DS_Uranus, DS_Neptune;
 
+    //Satellite and asteroids
+    Model M_Asteroid, M_Satellite1, M_Satellite2;
+    Texture T_Asteroid, T_Satellite1, T_Satellite2;
+    DescriptorSet DS_Asteroid, DS_Satellite1, DS_Satellite2;
+
 
 	// Other application parameters
 	int currScene = 0;
@@ -282,6 +287,9 @@ class CG_Proj : public BaseProject {
 //        M_Venus.init(this, &VDBlinn, "models/Sphere.obj", OBJ);
 //        M_Mars.init(this, &VDBlinn, "models/Sphere.obj", OBJ);
         M_Planet.init(this, &VDBlinn, "models/Sphere.obj", OBJ);
+        M_Asteroid.init(this, &VDBlinn, "models/10464_Asteroid_v1_Iterations-2.obj", OBJ);
+        M_Satellite1.init(this, &VDBlinn, "models/Satellite1.obj", OBJ);
+        M_Satellite2.init(this, &VDBlinn, "models/Satellite2.obj", OBJ);
 
 
 		// Create the textures
@@ -312,14 +320,18 @@ class CG_Proj : public BaseProject {
         T_Uranus.init(this, "textures/2k_uranus.jpg");
         T_Neptune.init(this, "textures/2k_neptune.jpg");
 
+        T_Asteroid.init(this, "textures/10464_Asteroid_v1_diffuse.jpg");
+        T_Satellite1.init(this, "textures/Satellite1.jpg");
+        T_Satellite2.init(this, "textures/Satellite2.jpg");
+
 		// Descriptor pool sizes
 		// WARNING!!!!!!!!
 		// Must be set before initializing the text and the scene
 // **A10** Update the number of elements to correctly size the descriptor sets pool
         //TODO: check the correct number after deletion of ships
 		DPSZs.uniformBlocksInPool = 8;
-		DPSZs.texturesInPool = 17;
-		DPSZs.setsInPool = 13;
+		DPSZs.texturesInPool = 20;
+		DPSZs.setsInPool = 16;
 
 std::cout << "Initializing text\n";
 		txt.init(this, &outText);
@@ -358,7 +370,11 @@ std::cout << "Initializing text\n";
         DS_Saturn.init(this, &DSLBlinn, {&T_Saturn});
         DS_Uranus.init(this, &DSLBlinn, {&T_Uranus});
         DS_Neptune.init(this, &DSLBlinn, {&T_Neptune});
-			
+
+        DS_Asteroid.init(this, &DSLBlinn, {&T_Asteroid});
+        DS_Satellite1.init(this, &DSLBlinn, {&T_Satellite1});
+        DS_Satellite2.init(this, &DSLBlinn, {&T_Satellite2});
+
 		DSGlobal.init(this, &DSLGlobal, {});
 
 		txt.pipelinesAndDescriptorSetsInit();		
@@ -390,6 +406,10 @@ std::cout << "Initializing text\n";
         DS_Saturn.cleanup();
         DS_Uranus.cleanup();
         DS_Neptune.cleanup();
+
+        DS_Asteroid.cleanup();
+        DS_Satellite1.cleanup();
+        DS_Satellite2.cleanup();
 
 		txt.pipelinesAndDescriptorSetsCleanup();
 	}
@@ -445,6 +465,16 @@ std::cout << "Initializing text\n";
         DS_Saturn.cleanup();
         DS_Uranus.cleanup();
         DS_Neptune.cleanup();
+
+        T_Asteroid.cleanup();
+        T_Satellite1.cleanup();
+        T_Satellite2.cleanup();
+        M_Asteroid.cleanup();
+        M_Satellite1.cleanup();
+        M_Satellite2.cleanup();
+//        DS_Asteroid.cleanup();
+//        DS_Satellite1.cleanup();
+//        DS_Satellite2.cleanup();
 
 		// Destroies the pipelines
         //FIXME: rimuovere ship
@@ -515,7 +545,23 @@ std::cout << "Initializing text\n";
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Planet.indices.size()), 1, 0, 0, 0);
 
 
+        PBlinn.bind(commandBuffer);
+        DSGlobal.bind(commandBuffer, PBlinn, 0, currentImage);
+        M_Asteroid.bind(commandBuffer);
+        DS_Asteroid.bind(commandBuffer, PBlinn, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Asteroid.indices.size()), 1, 0, 0, 0);
 
+        PBlinn.bind(commandBuffer);
+        DSGlobal.bind(commandBuffer, PBlinn, 0, currentImage);
+        M_Satellite1.bind(commandBuffer);
+        DS_Satellite1.bind(commandBuffer, PBlinn, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Satellite1.indices.size()), 1, 0, 0, 0);
+
+        PBlinn.bind(commandBuffer);
+        DSGlobal.bind(commandBuffer, PBlinn, 0, currentImage);
+        M_Satellite2.bind(commandBuffer);
+        DS_Satellite2.bind(commandBuffer, PBlinn, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Satellite2.indices.size()), 1, 0, 0, 0);
 
 
 
@@ -1309,6 +1355,41 @@ std::cout << "Initializing text\n";
         DS_Neptune.map( currentImage, &planetUbo[7], 0);
         DS_Neptune.map( currentImage, &blinnMatParUbo, 2);
 
+
+        //Asteroid -----------------------------------------------------------------------------------------------------
+        BlinnUniformBufferObject asteroidUbo{};
+        asteroidUbo.mMat = glm::translate(glm::mat4(1.0f), glm::vec3(3,3,5)) *
+                           /*glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0, 0, 0)) **/
+                           glm::scale(glm::mat4(1.0f), glm::vec3(0.1)) *
+                           baseTr;
+        asteroidUbo.mvpMat = ViewPrj * asteroidUbo.mMat;
+        asteroidUbo.nMat = glm::inverse(glm::transpose(asteroidUbo.mMat));
+
+        DS_Asteroid.map(currentImage, &asteroidUbo, 0);
+        DS_Asteroid.map(currentImage, &blinnMatParUbo, 2);
+
+        //Satellite ----------------------------------------------------------------------------------------------------
+        BlinnUniformBufferObject satellite1Ubo{};
+        satellite1Ubo.mMat = glm::translate(glm::mat4(1.0f), glm::vec3(2,7,-5)) *
+                           /*glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0, 0, 0)) **/
+                           glm::scale(glm::mat4(1.0f), glm::vec3(0.15)) *
+                           baseTr;
+        satellite1Ubo.mvpMat = ViewPrj * satellite1Ubo.mMat;
+        satellite1Ubo.nMat = glm::inverse(glm::transpose(satellite1Ubo.mMat));
+
+        DS_Satellite1.map(currentImage, &satellite1Ubo, 0);
+        DS_Satellite1.map( currentImage, &blinnMatParUbo, 2);
+
+        BlinnUniformBufferObject satellite2Ubo{};
+        satellite2Ubo.mMat = glm::translate(glm::mat4(1.0f), glm::vec3(-4,5,7)) *
+                             /*glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0, 0, 0)) **/
+                             glm::scale(glm::mat4(1), glm::vec3(0.5)) *
+                             baseTr;
+        satellite2Ubo.mvpMat = ViewPrj * satellite2Ubo.mMat;
+        satellite2Ubo.nMat = glm::inverse(glm::transpose(satellite2Ubo.mMat));
+
+        DS_Satellite2.map(currentImage, &satellite2Ubo, 0);
+        DS_Satellite2.map(currentImage, &blinnMatParUbo, 2);
 
 
         EmissionUniformBufferObject emissionUbo{};

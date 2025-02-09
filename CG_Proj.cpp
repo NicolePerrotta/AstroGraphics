@@ -21,6 +21,7 @@ std::vector<SingleText> outText = {
 
 // The uniform buffer object used in this example
 #define NSHIP 1
+#define NPLANETS 8
 struct BlinnUniformBufferObject { //FIXME: ship
 //	alignas(16) glm::mat4 mvpMat[NSHIP];
 //	alignas(16) glm::mat4 mMat[NSHIP];
@@ -152,7 +153,16 @@ class CG_Proj : public BaseProject {
     Model M_earth;
     Texture T_earth_diffuse, T_earth_specular, T_earth_normalMap, T_earth_emission, T_earth_clouds;
     DescriptorSet DS_earth;
-	
+
+    //Planets
+//    Model M_Venus, M_Mars;
+//    Texture T_Venus, T_Mars;
+//    DescriptorSet DS_Venus, DS_Mars;
+	Model M_Planet;
+    Texture T_Mercury, T_Venus, T_Moon, T_Mars, T_Jupiter, T_Saturn, T_Uranus, T_Neptune;
+    DescriptorSet DS_Mercury, DS_Venus, DS_Moon, DS_Mars, DS_Jupiter, DS_Saturn, DS_Uranus, DS_Neptune;
+
+
 	// Other application parameters
 	int currScene = 0;
 	int subpass = 0;
@@ -269,6 +279,10 @@ class CG_Proj : public BaseProject {
 // **A10** Place here the loading of the model. It should be contained in file "models/Sphere.gltf", it should use the
 //		Vertex descriptor you defined, and be of GLTF format.
         M_earth.init(this, &VD_Normal, "models/Sphere.gltf", GLTF);
+//        M_Venus.init(this, &VDBlinn, "models/Sphere.obj", OBJ);
+//        M_Mars.init(this, &VDBlinn, "models/Sphere.obj", OBJ);
+        M_Planet.init(this, &VDBlinn, "models/Sphere.obj", OBJ);
+
 
 		// Create the textures
 		Tship.init(this, "textures/Luminaris Diffuse.tga");
@@ -289,14 +303,23 @@ class CG_Proj : public BaseProject {
 		// Clouds map in: "2k_earth_clouds.jpg"
         T_earth_clouds.init(this, "textures/2k_earth_clouds.jpg");
 
+        T_Mercury.init(this, "textures/8k_mercury.jpg");
+        T_Venus.init(this, "textures/8k_venus_surface.jpg");
+        T_Moon.init(this, "textures/8k_moon.jpg");
+        T_Mars.init(this, "textures/8k_mars.jpg");
+        T_Jupiter.init(this, "textures/8k_jupiter.jpg");
+        T_Saturn.init(this, "textures/8k_saturn.jpg");
+        T_Uranus.init(this, "textures/2k_uranus.jpg");
+        T_Neptune.init(this, "textures/2k_neptune.jpg");
+
 		// Descriptor pool sizes
 		// WARNING!!!!!!!!
 		// Must be set before initializing the text and the scene
 // **A10** Update the number of elements to correctly size the descriptor sets pool
         //TODO: check the correct number after deletion of ships
 		DPSZs.uniformBlocksInPool = 8;
-		DPSZs.texturesInPool = 9;
-		DPSZs.setsInPool = 5;
+		DPSZs.texturesInPool = 17;
+		DPSZs.setsInPool = 13;
 
 std::cout << "Initializing text\n";
 		txt.init(this, &outText);
@@ -326,6 +349,15 @@ std::cout << "Initializing text\n";
 // **A10** Add the descriptor set creation
 // Textures should be passed in the diffuse, specular, normal map, emission and clouds order.
         DS_earth.init(this, &DSL_Normal, {&T_earth_diffuse, &T_earth_specular, &T_earth_normalMap, &T_earth_emission, &T_earth_clouds});
+
+        DS_Mercury.init(this, &DSLBlinn, {&T_Mercury});
+        DS_Venus.init(this, &DSLBlinn, {&T_Venus});
+        DS_Moon.init(this, &DSLBlinn, {&T_Moon});
+        DS_Mars.init(this, &DSLBlinn, {&T_Mars});
+        DS_Jupiter.init(this, &DSLBlinn, {&T_Jupiter});
+        DS_Saturn.init(this, &DSLBlinn, {&T_Saturn});
+        DS_Uranus.init(this, &DSLBlinn, {&T_Uranus});
+        DS_Neptune.init(this, &DSLBlinn, {&T_Neptune});
 			
 		DSGlobal.init(this, &DSLGlobal, {});
 
@@ -349,6 +381,15 @@ std::cout << "Initializing text\n";
 		DSGlobal.cleanup();
 // **A10** Add the descriptor set cleanup
         DS_earth.cleanup();
+
+        DS_Mercury.cleanup();
+        DS_Venus.cleanup();
+        DS_Moon.cleanup();
+        DS_Mars.cleanup();
+        DS_Jupiter.cleanup();
+        DS_Saturn.cleanup();
+        DS_Uranus.cleanup();
+        DS_Neptune.cleanup();
 
 		txt.pipelinesAndDescriptorSetsCleanup();
 	}
@@ -384,7 +425,27 @@ std::cout << "Initializing text\n";
 		DSLskyBox.cleanup();
 // **A10** Add the cleanup for the descriptor set layout
         DSL_Normal.cleanup();
-		
+
+        T_Mercury.cleanup();
+        T_Venus.cleanup();
+        T_Moon.cleanup();
+        T_Mars.cleanup();
+        T_Jupiter.cleanup();
+        T_Saturn.cleanup();
+        T_Uranus.cleanup();
+        T_Neptune.cleanup();
+//        M_Venus.cleanup();
+//        M_Mars.cleanup();
+        M_Planet.cleanup();
+        DS_Mercury.cleanup();
+        DS_Venus.cleanup();
+        DS_Moon.cleanup();
+        DS_Mars.cleanup();
+        DS_Jupiter.cleanup();
+        DS_Saturn.cleanup();
+        DS_Uranus.cleanup();
+        DS_Neptune.cleanup();
+
 		// Destroies the pipelines
         //FIXME: rimuovere ship
         PBlinn.destroy();
@@ -418,10 +479,48 @@ std::cout << "Initializing text\n";
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(Mship.indices.size()), NSHIP, 0, 0, 0);
 
+//        //Venus
+//        PBlinn.bind(commandBuffer);
+//        DSGlobal.bind(commandBuffer, PBlinn, 0, currentImage);
+//        M_Venus.bind(commandBuffer);
+//        DS_Venus.bind(commandBuffer, PBlinn, 1, currentImage);
+//        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Venus.indices.size()), 1, 0, 0, 0);
+//
+//        //Mars
+//        PBlinn.bind(commandBuffer);
+//        DSGlobal.bind(commandBuffer, PBlinn, 0, currentImage);
+//        M_Mars.bind(commandBuffer);
+//        DS_Mars.bind(commandBuffer, PBlinn, 1, currentImage);
+//        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Venus.indices.size()), 1, 0, 0, 0);
+
+        PBlinn.bind(commandBuffer);
+        DSGlobal.bind(commandBuffer, PBlinn, 0, currentImage);
+        M_Planet.bind(commandBuffer);
+
+        DS_Mercury.bind(commandBuffer, PBlinn, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Planet.indices.size()), 1, 0, 0, 0);
+        DS_Venus.bind(commandBuffer, PBlinn, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Planet.indices.size()), 1, 0, 0, 0);
+        DS_Moon.bind(commandBuffer, PBlinn, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Planet.indices.size()), 1, 0, 0, 0);
+        DS_Mars.bind(commandBuffer, PBlinn, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Planet.indices.size()), 1, 0, 0, 0);
+        DS_Jupiter.bind(commandBuffer, PBlinn, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Planet.indices.size()), 1, 0, 0, 0);
+        DS_Saturn.bind(commandBuffer, PBlinn, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Planet.indices.size()), 1, 0, 0, 0);
+        DS_Uranus.bind(commandBuffer, PBlinn, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Planet.indices.size()), 1, 0, 0, 0);
+        DS_Neptune.bind(commandBuffer, PBlinn, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(M_Planet.indices.size()), 1, 0, 0, 0);
 
 
 
-		PEmission.bind(commandBuffer);
+
+
+
+
+        PEmission.bind(commandBuffer);
 		Msun.bind(commandBuffer);
 		DSsun.bind(commandBuffer, PEmission, 0, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
@@ -451,6 +550,7 @@ std::cout << "Initializing text\n";
     void updateUniformBuffer(uint32_t currentImage) {
         static bool debounce = false;
         static int curDebounce = 0;
+        static int keyPressed = 0;
 
         float deltaT;
         glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
@@ -489,7 +589,8 @@ std::cout << "Initializing text\n";
         glm::vec3 shipRightDirection    = glm::vec3(0.0f, 0.0f, 1.0f);
         glm::vec3 shipUpDirection       = glm::vec3(0.0f, 1.0f, 0.0f);
 
-        static glm::vec3 cameraOffset = glm::vec3(0.0f, 0.1f, 0.15f);
+//        static glm::vec3 cameraOffset = glm::vec3(0.0f, 0.1f, 0.15f);
+        static glm::vec3 cameraOffset = glm::vec3(0.0f, 0.2f, 0.35f);
         glm::vec3 cameraPosition = shipPosition + cameraOffset;
         glm::vec3 cameraUpVector = glm::vec3(0, 1, 0);
         //0: look-At (default), 1: look-In
@@ -525,6 +626,8 @@ std::cout << "Initializing text\n";
                 liftOff = true;
                 std::cout << "La navicella si muove \n";
             }
+
+
         }
 
         //Flight timer--------------------------------------------------------------------------------------------------
@@ -544,6 +647,18 @@ std::cout << "Initializing text\n";
 
             if (newTime == oldTime + 1){
                 std::cout << "flightTimer    = " << newTime    << ";\n";
+                switch (newTime) {
+                    case 1:
+                    case 2:
+                        keyPressed = 4;
+                        break;
+                    case 3:
+                    case 4:
+                    case 5:
+                        keyPressed = 2;
+                        break;
+
+                }
             }
 
             //TODO: decidere durata volo
@@ -558,7 +673,7 @@ std::cout << "Initializing text\n";
         }
 
         const float ROT_SPEED = glm::radians(120.0f);
-        const float MOVE_SPEED = 2.0f;
+        float MOVE_SPEED = 2.0f;
 
         static float ShowCloud = 1.0f;
         static float ShowTexture = 1.0f;
@@ -651,6 +766,13 @@ std::cout << "Initializing text\n";
             }
         }
 
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+            // Codice eseguito SOLO mentre il tasto è premuto
+            std::cout << "Tasto SHIFT premuto: Velocita' aumentata\n";
+            MOVE_SPEED = 15.0f;
+        }
+
+
 
         if(currScene == 1) {
             switch(subpass) {
@@ -711,7 +833,7 @@ std::cout << "Initializing text\n";
             }
         }
 
-        if(glfwGetKey(window, GLFW_KEY_1)) {
+        if(glfwGetKey(window, GLFW_KEY_1) || keyPressed == 1) {
             if(!debounce) {
                 debounce = true;
                 curDebounce = GLFW_KEY_1;
@@ -727,7 +849,7 @@ std::cout << "Initializing text\n";
             }
         }
 
-        if(glfwGetKey(window, GLFW_KEY_2)) {
+        if(glfwGetKey(window, GLFW_KEY_2) || keyPressed == 2) {
             if(!debounce) {
                 debounce = true;
                 curDebounce = GLFW_KEY_2;
@@ -745,7 +867,7 @@ std::cout << "Initializing text\n";
 
 
         // Here is where you actually update your uniforms
-        glm::mat4 Mp = glm::perspective(glm::radians(45.0f), Ar, 0.001f, 160.0f);
+        glm::mat4 Mp = glm::perspective(glm::radians(45.0f), Ar, 0.001f, 300.0f);
         Mp[1][1] *= -1;
 
 //        glm::mat4 Mv_lookAt = glm::rotate(glm::mat4(1.0f), /*shipRoll*/0.0f, glm::vec3(0, 0, 1)) *
@@ -842,7 +964,7 @@ std::cout << "Initializing text\n";
                 * glm::scale(glm::mat4(1), glm::vec3(0.0025))
                 * baseTr;
 
-        if(glfwGetKey(window, GLFW_KEY_3)) {
+        if(glfwGetKey(window, GLFW_KEY_3) || keyPressed == 3) {
             if(!debounce) {
                 debounce = true;
                 curDebounce = GLFW_KEY_3;
@@ -862,7 +984,7 @@ std::cout << "Initializing text\n";
                 curDebounce = 0;
             }
         }
-        if(glfwGetKey(window, GLFW_KEY_4)) {
+        if(glfwGetKey(window, GLFW_KEY_4) || keyPressed == 4) {
             if(!debounce) {
                 debounce = true;
                 curDebounce = GLFW_KEY_4;
@@ -1044,6 +1166,140 @@ std::cout << "Initializing text\n";
         DS_earth.map(currentImage, &engineUbo, 7);
 
 
+        BlinnUniformBufferObject planetUbo[NPLANETS];
+
+        // Definizione delle posizioni x dei pianeti
+        std::unordered_map<std::string, float> planetPositions = {
+                {"Mercurio", -66.56569f},
+                {"Venere",   -33.89986f},
+                {"Terra",    0.0f},
+                {"Luna",     0.0f},  // La Luna è sulla Terra
+                {"Marte",    33.06404f},
+                {"Giove",    33.06404f + 1.06404f + 60.0f + 21.9463f},
+                {"Saturno",  33.06404f + 1.06404f + 60.0f + 21.9463f + 120.0f + 18.2797f},
+                {"Urano",    33.06404f + 1.06404f + 60.0f + 21.9463f + 120.0f + 18.2797f + 50.0f + 7.9617f},
+                {"Nettuno",  33.06404f + 1.06404f + 60.0f + 21.9463f + 120.0f + 18.2797f + 50.0f + 7.9617f + 30.0f + 7.7294f}
+        };
+
+        // Tempi di rotazione proporzionati alla Terra
+        std::unordered_map<std::string, float> planetTurnTimes = {
+                {"Mercurio", 72.0f * (1407.6f / 24.0f)},
+                {"Venere",   72.0f * (-5832.5f / 24.0f)}, // Rotazione inversa
+                {"Terra",    72.0f},
+                {"Luna",     72.0f * (656.7f / 24.0f)},
+                {"Marte",    72.0f * (24.6f / 24.0f)},
+                {"Giove",    72.0f * (9.9f / 24.0f)},
+                {"Saturno",  72.0f * (10.7f / 24.0f)},
+                {"Urano",    72.0f * (-17.2f / 24.0f)}, // Rotazione inversa
+                {"Nettuno",  72.0f * (16.1f / 24.0f)}
+        };
+
+        static float planetTimes[NPLANETS] = {0.0f}; // Timer separato per ogni pianeta
+        static std::unordered_map<std::string, float> planetRotationAngles;
+
+        // Applicazione delle posizioni ai pianeti nel buffer
+        for (int i = 0; i < NPLANETS; i++) {
+            glm::vec3 planetPosition;
+            float scale, radius;
+            std::string planetName;
+
+            switch (i) {
+                case 0: // Mercurio
+                    planetName = "Mercurio";
+                    scale = 0.38f * 4.0f;
+                    radius = 0.76597f;
+//                    planetPosition = glm::vec3(planetPositions["Mercurio"], 0.0f, 0.0f);
+                    break;
+                case 1: // Venere
+                    planetName = "Venere";
+                    scale = 0.95f * 4.0f;
+                    radius = 1.89986f;
+//                    planetPosition = glm::vec3(planetPositions["Venere"], 0.0f, 0.0f);
+                    break;
+                case 2: // Luna
+                    planetName = "Luna";
+                    scale = 1.08f;
+                    radius = 0.0f;
+                    planetPosition = glm::vec3(planetPositions["Luna"], 6.0f, -7.0f);  // Sopra la Terra
+                    break;
+                case 3: // Marte
+                    planetName = "Marte";
+                    scale = 0.53f * 4.0f;
+                    radius = 1.06404f;
+//                    planetPosition = glm::vec3(planetPositions["Marte"], 0.0f, 0.0f);
+                    break;
+                case 4: // Giove
+                    planetName = "Giove";
+                    scale = 10.97f * 4.0f;
+                    radius = 21.9463f;
+//                    planetPosition = glm::vec3(planetPositions["Giove"], 0.0f, 0.0f);
+                    break;
+                case 5: // Saturno
+                    planetName = "Saturno";
+                    scale = 9.14f * 4.0f;
+                    radius = 18.2797f;
+//                    planetPosition = glm::vec3(planetPositions["Saturno"], 0.0f, 0.0f);
+                    break;
+                case 6: // Urano
+                    planetName = "Urano";
+                    scale = 3.98f * 4.0f;
+                    radius = 7.9617f;
+//                    planetPosition = glm::vec3(planetPositions["Urano"], 0.0f, 0.0f);
+                    break;
+                case 7: // Nettuno
+                    planetName = "Nettuno";
+                    scale = 3.86f * 4.0f;
+                    radius = 7.7294f;
+//                    planetPosition = glm::vec3(planetPositions["Nettuno"], 0.0f, 0.0f);
+                    break;
+            }
+
+            //Update rotation time
+            planetTimes[i] += deltaT;
+            if (planetTimes[i] > planetTurnTimes[planetName]) {
+                planetTimes[i] -= planetTurnTimes[planetName];
+            }
+
+            // Calcola l'angolo di rotazione
+            float angTurnTimeFact = 2.0f * M_PI / planetTurnTimes[planetName];
+            planetRotationAngles[planetName] = planetTimes[i] * angTurnTimeFact;
+
+            // Posizionamento standard
+            if (i != 2) {  // La Luna ha già una posizione fissa
+                planetPosition = glm::vec3(planetPositions[planetName], 0.0f, 0.0f);
+            }
+
+            // Applicazione delle trasformazioni
+            planetUbo[i].mMat = glm::translate(glm::mat4(1.0f), planetPosition) *
+                                glm::rotate(glm::mat4(1.0f), planetRotationAngles[planetName], glm::vec3(0, 1, 0)) *
+                                glm::scale(glm::mat4(1.0f), glm::vec3(scale)) *
+                                baseTr;
+            planetUbo[i].mvpMat = ViewPrj * planetUbo[i].mMat;
+            planetUbo[i].nMat = glm::inverse(glm::transpose(planetUbo[i].mMat));
+        }
+
+
+
+
+
+        DS_Mercury.map( currentImage, &planetUbo[0], 0);
+        DS_Mercury.map( currentImage, &blinnMatParUbo, 2);
+        DS_Venus.map(   currentImage, &planetUbo[1], 0);
+        DS_Venus.map(   currentImage, &blinnMatParUbo, 2);
+        DS_Moon.map(    currentImage, &planetUbo[2], 0);
+        DS_Moon.map(    currentImage, &blinnMatParUbo, 2);
+        DS_Mars.map(    currentImage, &planetUbo[3], 0);
+        DS_Mars.map(    currentImage, &blinnMatParUbo, 2);
+        DS_Jupiter.map( currentImage, &planetUbo[4], 0);
+        DS_Jupiter.map( currentImage, &blinnMatParUbo, 2);
+        DS_Saturn.map(  currentImage, &planetUbo[5], 0);
+        DS_Saturn.map(  currentImage, &blinnMatParUbo, 2);
+        DS_Uranus.map(  currentImage, &planetUbo[6], 0);
+        DS_Uranus.map(  currentImage, &blinnMatParUbo, 2);
+        DS_Neptune.map( currentImage, &planetUbo[7], 0);
+        DS_Neptune.map( currentImage, &blinnMatParUbo, 2);
+
+
 
         EmissionUniformBufferObject emissionUbo{};
         emissionUbo.mvpMat = ViewPrj * glm::translate(glm::mat4(1), gubo.lightDir * 40.0f) * baseTr;
@@ -1089,6 +1345,8 @@ std::cout << "Initializing text\n";
 
         // These informations should be used to fill the Uniform Buffer Object in Binding 6 of your DSL
         DS_earth.map(currentImage, &earthUbo, 6);
+
+        keyPressed = 0;
     }
 };
 

@@ -46,6 +46,30 @@ struct EngineUniformBufferObject {
     alignas(4) float lightOn;
 };
 
+struct SceneObject {
+    std::string objectName;
+    glm::vec3 position;
+    float radius;
+};
+std::vector<SceneObject> sceneObjects ={
+        {"Mercury", glm::vec3(-66.56569, 0.0f, 0.0f),   1.52f },
+        {"Venus",   glm::vec3(-33.89986, 0.0f, 0.0f),   3.8f },
+        {"Earth",   glm::vec3(0.0, 0.0f, 0.0f),         4.0f },
+        {"Moon",    glm::vec3(0.0, 6.0f, -7.0f),        1.08f },
+        {"Mars",    glm::vec3(33.06404, 0.0f, 0.0f),    2.12f },
+        {"Jupiter", glm::vec3(116.07438, 0.0f, 0.0f),   43.88f },
+        {"Saturn",  glm::vec3(254.35408, 0.0f, 0.0f),   36.56f },
+        {"Uranus",  glm::vec3(312.31578, 0.0f, 0.0f),   15.92f },
+        {"Neptune", glm::vec3(350.04518, 0.0f, 0.0f),   15.44f },
+        {"Asteroid", glm::vec3(3,3,5),   0.8f },
+        {"Satellite1", glm::vec3(2,7,-5),   0.6f },
+        {"Satellite2", glm::vec3(-4,5,7),   1.5f },
+};
+bool checkCollision(glm::vec3 shipPosition, float shipRadius, glm::vec3 objectPosition, float objectRadius) {
+    float distance = glm::length(shipPosition - objectPosition);
+    return distance < (shipRadius + objectRadius); // True = collision
+}
+
 struct GlobalUniformBufferObject {
 	alignas(16) glm::vec3 lightDir;
 	alignas(16) glm::vec4 lightColor;
@@ -151,9 +175,7 @@ class CG_Proj : public BaseProject {
 
 	// Other application parameters
 	int currScene = 0;
-	int subpass = 0; //FIXME: eliminare parte del prof
 
-	glm::vec3 CamPos = glm::vec3(0.0, 0.1, 5.0); //fixme: eliminare parte prof
 	glm::mat4 ViewMatrix;
 
 	float Ar;
@@ -646,8 +668,8 @@ class CG_Proj : public BaseProject {
         const float ROT_SPEED = glm::radians(120.0f);
         float MOVE_SPEED = 2.0f;
 
-        static float ShowCloud = 1.0f; //fixme: togliere
-        static float ShowTexture = 1.0f; //fixme: togliere
+        static float ShowCloud = 1.0f;
+        static float ShowTexture = 1.0f;
 
         // The Fly model update proc.
         ViewMatrix = glm::rotate(glm::mat4(1), ROT_SPEED * r.x * deltaT,glm::vec3(1, 0, 0)) * ViewMatrix;
@@ -800,9 +822,22 @@ class CG_Proj : public BaseProject {
         glm::vec3 totalMovement = movement + autoMovement;
 
         //Update ship position
-        shipPos_x += totalMovement.x;
-        shipPos_y += totalMovement.y;
-        shipPos_z += totalMovement.z;
+        glm::vec3 newShipPosition = glm::vec3(shipPos_x, shipPos_y, shipPos_z) + totalMovement;
+        float shipRadius = 0.09f;
+
+        // Check collision with all the object
+        for (const auto& object : sceneObjects) {
+            if (checkCollision(newShipPosition, shipRadius, object.position, object.radius)) {
+                std::cout << "Collision with: " << object.objectName << ";\n";
+                newShipPosition = glm::vec3(shipPos_x, shipPos_y, shipPos_z);
+                break;
+            }
+        }
+
+        // Update ship position only if there is no collision
+        shipPos_x = newShipPosition.x;
+        shipPos_y = newShipPosition.y;
+        shipPos_z = newShipPosition.z;
 
         blinnUbo.mMat =
                 glm::translate(glm::mat4(1), glm::vec3(shipPos_x, shipPos_y, shipPos_z))

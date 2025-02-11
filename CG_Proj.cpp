@@ -6,16 +6,16 @@
 
 std::vector<SingleText> outText = {
 	{2, {"Press SPACE to start the liftoff", "","",""}, 0, 0},
-	{1, {"Launch in: 10"}, 0, 0},
-	{1, {"Launch in: 9"}, 0, 0},
-	{1, {"Launch in: 8"}, 0, 0},
-	{1, {"Launch in: 7"}, 0, 0},
-	{1, {"Launch in: 6"}, 0, 0},
-	{1, {"Launch in: 5"}, 0, 0},
-	{1, {"Launch in: 4"}, 0, 0},
-	{1, {"Launch in: 3"}, 0, 0},
-	{1, {"Launch in: 2"}, 0, 0},
-	{1, {"Launch in: 1"}, 0, 0},
+	{2, {"Launch in: 10", "[------------------]"}, 0, 0},
+	{2, {"Launch in: 9",  "[##----------------]"}, 0, 0},
+	{2, {"Launch in: 8",  "[####--------------]"}, 0, 0},
+	{2, {"Launch in: 7",  "[######------------]"}, 0, 0},
+	{2, {"Launch in: 6",  "[########----------]"}, 0, 0},
+	{2, {"Launch in: 5",  "[##########--------]"}, 0, 0},
+	{2, {"Launch in: 4",  "[############------]"}, 0, 0},
+	{2, {"Launch in: 3",  "[##############----]"}, 0, 0},
+	{2, {"Launch in: 2",  "[################--]"}, 0, 0},
+	{2, {"Launch in: 1",  "[##################]"}, 0, 0},
 	{1, {""}, 0, 0}
 };
 
@@ -293,7 +293,7 @@ class CG_Proj : public BaseProject {
         T_Satellite1.init(this, "textures/Satellite1.jpg");
         T_Satellite2.init(this, "textures/Satellite2.jpg");
 
-		// Descriptor pool sizes
+		// Descriptor pool sizes ---------------------------------------------------------------------------------------
 		// WARNING!!!!!!!!
 		// Must be set before initializing the text and the scene
 
@@ -757,9 +757,9 @@ class CG_Proj : public BaseProject {
         BlinnUniformBufferObject blinnUbo{};
         BlinnMatParUniformBufferObject blinnMatParUbo{};
 
-        shipPitch   += ROT_SPEED * r.x * deltaT;
-        shipRoll    += -ROT_SPEED * r.z * deltaT;
-        shipYaw     += -ROT_SPEED * r.y * deltaT;
+//        shipPitch   += ROT_SPEED * r.x * deltaT;
+//        shipRoll    += -ROT_SPEED * r.z * deltaT;
+//        shipYaw     += -ROT_SPEED * r.y * deltaT;
 
         //Update the direction of the ship and of the camera
 
@@ -776,17 +776,17 @@ class CG_Proj : public BaseProject {
 
         //Rotation matrix on local axes
         glm::mat4 incrementalRotation =
-                glm::rotate(glm::mat4(1), -ROT_SPEED * r.y * deltaT, shipUpDirection) *    // Yaw attorno all'asse Up locale
-                glm::rotate(glm::mat4(1), ROT_SPEED * r.x * deltaT, shipRightDirection) * // Pitch attorno all'asse Right locale
-                glm::rotate(glm::mat4(1), -ROT_SPEED * r.z * deltaT, shipForwardDirection); // Roll attorno all'asse Forward locale
+                glm::rotate(glm::mat4(1), -ROT_SPEED * r.y * deltaT, shipUpDirection) *
+                glm::rotate(glm::mat4(1), ROT_SPEED * r.x * deltaT, shipRightDirection) *
+                glm::rotate(glm::mat4(1), -ROT_SPEED * r.z * deltaT, shipForwardDirection);
 
         //Update rotationMatrix combining the new rotation with the previous one
         rotationMatrix = incrementalRotation * rotationMatrix;
 
         //Update again the local axes from the updated rotation matrix
-        shipForwardDirection = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(1, 0, 0, 0)));
-        shipRightDirection   = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(0, 0, 1, 0)));
-        shipUpDirection      = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(0, 1, 0, 0)));
+//        shipForwardDirection = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(1, 0, 0, 0)));
+//        shipRightDirection   = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(0, 0, 1, 0)));
+//        shipUpDirection      = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(0, 1, 0, 0)));
 
         //Update the position using the new directions------------------------------------------------------
 

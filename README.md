@@ -68,9 +68,7 @@ sh compileShaders.sh   # Linux/macOS
 - `3`, `4`: Toggle between look-in and look-at modes.
 - `W`, `A`, `S`, `D`: Move the spacecraft.
 - `SHIFT`: Increase movement speed.
-```
 
 ## License
 
 This project is licensed under the MIT License. See `LICENSE` for details.
-
